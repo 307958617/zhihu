@@ -8,4 +8,11 @@
 </p>
 
 ## 说明：
-这是第一次使用git上传laravel项目到GitHub请大家批评指正！
+这是结合laravist网站上关于知乎开发视频的学习记录。
+
+## 步骤一：环境配置和用户表设计
+###1、将app目录设置成为Sources Root
+    点击右键-选择Mark Directory as-选择Sources Root
+###2、配置.vue文件，设置如下：
+    DB_DATABASE=zhihu;DB_USERNAME=root;DB_PASSWORD=
+###3、到mysql创建一个名为：zhihu 的数据库
