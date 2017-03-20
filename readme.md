@@ -182,3 +182,25 @@
         
             }
         }
+        
+## 步骤三：用户登录
+其实这一步主要是需要将邮箱激活添加到登录验证，即让is_active=1的用户可以登录，让is_active=0的用户不能登录。
+### 1、修改LoginController.php里面AuthenticatesUsers.php的attemptLogin方法为：
+    protected function attemptLogin(Request $request)
+        {
+            $credentials = array_merge($this->credentials($request),['is_active' => 1]);//添加is_active字段进去判断是否用邮箱激活
+            return $this->guard()->attempt(
+                $credentials, $request->has('remember')
+            );
+        }
+**注意：不过最好还是在LoginController里面重写login和attemptLogin方法。** 
+### 2、添加一个好用消息提示的功能用于登录或其他反面：
+    在GitHub上搜索laracasts/flash，按部就班的安装使用即可。然后想在上面地方用就放到上面地方
+    需要注意：需要将下面的代码放到layouts里面的app.blade.php里面以显示
+              @if (session()->has('flash_notification.message'))
+                   <div class="alert alert-{{ session('flash_notification.level') }}">
+                       <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+               
+                       {!! session('flash_notification.message') !!}
+                   </div>
+               @endif
