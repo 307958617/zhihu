@@ -50,3 +50,6 @@
     php artisan migrate
     如果执行上面命令时候报错： Syntax error or access violation: 1071 Specified key was too long; max key length is 1000 bytes，解决方法如下：
     将config->database.php 设置mysql为'engine' => 'InnoDB ROW_FORMAT=DYNAMIC',之后在数据库中删除表，重新执行上面的migrate命令即可。
+## 步骤二：用户注册
+### 1、NauxLiu/Laravel-SendCloud邮件发送驱动安装
+    在GitHub搜索NauxLiu/Laravel-SendCloud，里面有具体的安装步骤，按部就班就可以了。
