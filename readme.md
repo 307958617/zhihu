@@ -52,4 +52,133 @@
     将config->database.php 设置mysql为'engine' => 'InnoDB ROW_FORMAT=DYNAMIC',之后在数据库中删除表，重新执行上面的migrate命令即可。
 ## 步骤二：用户注册
 ### 1、NauxLiu/Laravel-SendCloud邮件发送驱动安装
-    在GitHub搜索NauxLiu/Laravel-SendCloud，里面有具体的安装步骤，按部就班就可以了。
+    在GitHub搜索NauxLiu/Laravel-SendCloud，用sendcloud邮件服务来发送邮件，里面有具体的安装步骤，按部就班就可以了。不过需要先注册并了解sendcloud。
+### 2、命令生成laravel自带的用户注册功能，运行如下命令：
+    php artisan make:auth 
+### 3、修改通过上面的命令生成的RegisterController注册控制器实现注册时发送邮件：
+    <?php
+    
+    namespace App\Http\Controllers\Auth;
+    use Illuminate\Support\Facades\Mail;//不要忘记添加这里的代码
+    use App\User;
+    use App\Http\Controllers\Controller;
+    use Illuminate\Support\Facades\Validator;
+    use Illuminate\Foundation\Auth\RegistersUsers;
+    use Naux\Mail\SendCloudTemplate; //不要忘记添加这里的代码
+    
+    class RegisterController extends Controller
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Register Controller
+        |--------------------------------------------------------------------------
+        |
+        | This controller handles the registration of new users as well as their
+        | validation and creation. By default this controller uses a trait to
+        | provide this functionality without requiring any additional code.
+        |
+        */
+    
+        use RegistersUsers;
+    
+        /**
+         * Where to redirect users after registration.
+         *
+         * @var string
+         */
+        protected $redirectTo = '/home';
+    
+        /**
+         * Create a new controller instance.
+         *
+         * @return void
+         */
+        public function __construct()
+        {
+            $this->middleware('guest');
+        }
+    
+        /**
+         * Get a validator for an incoming registration request.
+         *
+         * @param  array  $data
+         * @return \Illuminate\Contracts\Validation\Validator
+         */
+        protected function validator(array $data)
+        {
+            return Validator::make($data, [
+                'name' => 'required|max:255',
+                'email' => 'required|email|max:255|unique:users',
+                'password' => 'required|min:6|confirmed',
+            ]);
+        }
+    
+        /**
+         * Create a new user instance after a valid registration.
+         *
+         * @param  array  $data
+         * @return User
+         */
+        protected function create(array $data)
+        {
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'avatar' => '/images/avatars/default.png', //此文件是放在public目录下面的
+                'confirmation_token' => str_random(40), //生成邮箱验证的随机token字符串
+                'password' => bcrypt($data['password']),
+            ]);//这里需要注意：将avatar和confirmation_token这两个字段添加到User Model的fillable里面
+            $this->sendVerifyEmailTo($user);
+            return $user;
+        }
+    
+        /**
+         * 引入SendCloud,通过它来发送邮件
+         */
+    
+        public function sendVerifyEmailTo($user)
+        {
+            $data = [
+                'url' => route('verify.email',['token' => $user->confirmation_token]),
+                //注意：此处的verify.email是下面第四步②里面创建的路由。
+                'name' => $user->name
+            ];//注意：这里面的变量名与sendcloud里面的变量名必须一致。
+            $template = new SendCloudTemplate('zhihu_dev_register', $data);
+    
+            Mail::raw($template, function ($message) use($user) {
+                $message->from('307958617@qq.com', 'Laravel');
+    
+                $message->to($user->email);
+            });
+        }
+    }
+### 4、实现点击收到的邮件链接，激活邮箱验证功能：
+    ① 在web.php路由文件添加一个路由，生产一个邮箱链接地址：
+            Route::get('email/verify/{token}',['as' => 'verify.email','uses' => 'EmailController@verify']);
+            
+    ② 创建一个名为：EmailController 的控制器，实现邮箱的相关验证功能，其内容如下：
+        <?php
+        
+        namespace App\Http\Controllers;
+        
+        use Illuminate\Support\Facades\Auth;
+        use App\User;
+        use Illuminate\Http\Request;
+        
+        class EmailController extends Controller
+        {
+            public function verify($token)
+            {
+                $user = User::where('confirmation_token',$token)->first();
+                if (is_null($user)){
+                    //如果该用户不存在怎么样...
+                    return redirect('/');
+                }
+                $user->is_active = 1;  //激活用户
+                $user->confirmation_token = str_random(40); //重置token
+                $user->save();
+                Auth::login($user);//登录
+                return redirect('/home');//跳转
+        
+            }
+        }
