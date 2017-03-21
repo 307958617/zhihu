@@ -194,8 +194,8 @@
             );
         }
 **注意：不过最好还是在LoginController里面重写login和attemptLogin方法。** 
-### 2、添加一个好用消息提示的功能用于登录或其他反面：
-    在GitHub上搜索laracasts/flash，按部就班的安装使用即可。然后想在上面地方用就放到上面地方
+### 2、添加一个好用消息提示的功能用于登录或其他方面：
+    在GitHub上搜索laracasts/flash，按部就班的安装使用即可。然后想在什么地方用就放到什么地方
     需要注意：需要将下面的代码放到layouts里面的app.blade.php里面以显示
               @if (session()->has('flash_notification.message'))
                    <div class="alert alert-{{ session('flash_notification.level') }}">
@@ -204,3 +204,8 @@
                        {!! session('flash_notification.message') !!}
                    </div>
                @endif
+    同时在<script src="{{ asset('js/app.js') }}"></script>下面添加如下代码因为是基于jquery的：
+        <script>
+            $('#flash-overlay-modal').modal();//用于显示模板
+            $('div.alert').not('.alert-important').delay(3000).fadeOut(350);//用于控制显示时间
+        </script>
