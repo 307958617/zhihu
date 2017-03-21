@@ -209,3 +209,5 @@
             $('#flash-overlay-modal').modal();//用于显示模板
             $('div.alert').not('.alert-important').delay(3000).fadeOut(350);//用于控制显示时间
         </script>
+## 步骤四、本地化
+即将英文显示全部换成中文显示，如注册登录界面改成中文，或验证消息等换成中文。
