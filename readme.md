@@ -211,3 +211,99 @@
         </script>
 ## 步骤四、本地化
 即将英文显示全部换成中文显示，如注册登录界面改成中文，或验证消息等换成中文。
+## 步骤五、修改密码功能（重写）
+即在User.php这个model里面重写Illuminate\Auth\Passwords\CanResetPassword.php里面的sendPasswordResetNotification()方法
+此方法就用了Illuminate\Auth\Notifications\ResetPassword的notify方法实现发送邮件（因为它继承了Notification），而此方法正好在User.php里面的Notifiable里面。
+因此，User.php重写后代码如下：（在这里就直接发送邮件了！）
+    
+    <?php 
+    namespace App;
+    
+    use Illuminate\Notifications\Notifiable;
+    use Illuminate\Foundation\Auth\User as Authenticatable;
+    use Illuminate\Support\Facades\Mail;
+    use Naux\Mail\SendCloudTemplate;
+    
+    class User extends Authenticatable
+    {
+        use Notifiable;
+    
+        /**
+         * The attributes that are mass assignable.
+         *
+         * @var array
+         */
+        protected $fillable = [
+            'name', 'email', 'password','avatar','confirmation_token'
+        ];
+    
+        /**
+         * The attributes that should be hidden for arrays.
+         *
+         * @var array
+         */
+        protected $hidden = [
+            'password', 'remember_token','confirmation_token'
+        ];
+    
+        public function sendPasswordResetNotification($token)
+        {
+            $data = [
+                'url' => route('password.reset',$token),
+            ];//注意：这里面的变量名与sendcloud里面的变量名必须一致。
+            $template = new SendCloudTemplate('ZhiHu_Modify_Password', $data);//这里需要在SendCloud重新设置一个修改密码的邮件模板
+    
+            Mail::raw($template, function ($message){
+                $message->from('307958617@qq.com', 'Laravel');
+                $message->to($this->email);
+            });
+        }
+    
+    
+    }
+## 步骤六、设计问题表
+1、创建model和迁移表：
+
+    php artisan make:model Question -m
+2、设计表字段：
+    
+    <?php
+    use Illuminate\Support\Facades\Schema;
+    use Illuminate\Database\Schema\Blueprint;
+    use Illuminate\Database\Migrations\Migration;
+    
+    class CreateQuestionsTable extends Migration
+    {
+        /**
+         * Run the migrations.
+         *
+         * @return void
+         */
+        public function up()
+        {
+            Schema::create('questions', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('title');
+                $table->string('body');
+                $table->integer('user_id')->unsigned();//关联user表，表示是谁发起的问题
+                $table->integer('comments_count')->default(0);//有多少评论
+                $table->integer('followers_count')->default(1);//有多少个关注，默认自己发表就关注了所以默认值为1
+                $table->integer('answers_count')->default(0);//有多少个回答
+                $table->string('close_comment',8)->default('F');//是否关闭评论，默认是没有关闭的
+                $table->string('is_hidden',8)->default('F');//是否是隐藏状态，默认不是隐藏（这里的设置有助于管理用户发布的问题）
+                $table->timestamps();
+            });
+        }
+    
+        /**
+         * Reverse the migrations.
+         *
+         * @return void
+         */
+        public function down()
+        {
+            Schema::dropIfExists('questions');
+        }
+    }
+
+    
