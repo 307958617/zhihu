@@ -211,3 +211,53 @@
         </script>
 ## 步骤四、本地化
 即将英文显示全部换成中文显示，如注册登录界面改成中文，或验证消息等换成中文。
+## 步骤五、修改密码功能（重写）
+即在User.php这个model里面重写Illuminate\Auth\Passwords\CanResetPassword.php里面的sendPasswordResetNotification()方法
+此方法就用了Illuminate\Auth\Notifications\ResetPassword的notify方法实现发送邮件（因为它继承了Notification），而此方法正好在User.php里面的Notifiable里面。
+因此，User.php重写后代码如下：（在这里就直接发送邮件了！）
+    
+    <?php 
+    namespace App;
+    
+    use Illuminate\Notifications\Notifiable;
+    use Illuminate\Foundation\Auth\User as Authenticatable;
+    use Illuminate\Support\Facades\Mail;
+    use Naux\Mail\SendCloudTemplate;
+    
+    class User extends Authenticatable
+    {
+        use Notifiable;
+    
+        /**
+         * The attributes that are mass assignable.
+         *
+         * @var array
+         */
+        protected $fillable = [
+            'name', 'email', 'password','avatar','confirmation_token'
+        ];
+    
+        /**
+         * The attributes that should be hidden for arrays.
+         *
+         * @var array
+         */
+        protected $hidden = [
+            'password', 'remember_token','confirmation_token'
+        ];
+    
+        public function sendPasswordResetNotification($token)
+        {
+            $data = [
+                'url' => route('password.reset',$token),
+            ];//注意：这里面的变量名与sendcloud里面的变量名必须一致。
+            $template = new SendCloudTemplate('ZhiHu_Modify_Password', $data);//这里需要在SendCloud重新设置一个修改密码的邮件模板
+    
+            Mail::raw($template, function ($message){
+                $message->from('307958617@qq.com', 'Laravel');
+                $message->to($this->email);
+            });
+        }
+    
+    
+    }
