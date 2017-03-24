@@ -284,7 +284,7 @@
             Schema::create('questions', function (Blueprint $table) {
                 $table->increments('id');
                 $table->string('title');
-                $table->string('body');
+                $table->longText('body'); //不能用string，不然字段长度不够
                 $table->integer('user_id')->unsigned();//关联user表，表示是谁发起的问题
                 $table->integer('comments_count')->default(0);//有多少评论
                 $table->integer('followers_count')->default(1);//有多少个关注，默认自己发表就关注了所以默认值为1
@@ -305,5 +305,98 @@
             Schema::dropIfExists('questions');
         }
     }
+3、迁移表到数据库中：
 
+    php artisan migrate
+## 步骤七、实现发布问题功能
+### 1、引入Laravel-UEditor这个富文本编辑器，具体步骤在GitHub上搜索overtrue/laravel-ueditor按部就班即可。
+注意：在引入之前，需要创建发布问题的视图：
+#### ①在views目录下创建一个文件夹：questions
+#### ②在questions文件夹下面创建一个名为create.blade.php的视图文件用来发布问题，代码如下： 
+    @extends('layouts.app')
     
+    @section('content')
+        @include('vendor.ueditor.assets') {{--这行的作用是引入编辑器需要的 css,js 等文件，所以你不需要再手动去引入它们--}}
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">发布问题</div>
+                        <div class="panel-body">
+                            <form action="/questions" method="post" role="form">
+                                {{csrf_field()}}
+                                <div class="form-group">
+                                    <label for="title">问题名称</label>
+                                    <input type="text" class="form-control" name="title" placeholder="请输入问题名称">
+                                </div>
+                                <div class="form-group">
+                                    <label for="title">问题内容</label>
+                                    <!-- 编辑器容器 -->
+                                    <script id="container" name="body" type="text/plain"></script>
+                                </div>
+                                <button type="submit" class="btn btn-primary pull-right">发布问题</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 实例化编辑器 -->
+        <script type="text/javascript">
+            var ue = UE.getEditor('container');
+            ue.ready(function() {
+                ue.execCommand('serverparam', '_token', '{{ csrf_token() }}'); // 设置 CSRF token.
+            });
+        </script>
+    @endsection
+#### ③创建一个resource类型的控制器名为：QuestionsController。
+    php artisan make:controller QuestionsController --resource
+#### ④进入QuestionsController控制器文件，修改create方法为：
+    public function create()
+    {
+        return view('questions.create');//返回发布问题的视图
+    }
+     
+#### ⑤进入web.php路由文件添加一个资源路由：
+    Route::resource('questions','QuestionsController',['names'=>[  //命名路由
+        'create' => 'questions.create',// 用于显示提交问题的表单的页面
+        'show' => 'questions.show'  //用于发布问题后显示问题的页面
+    ]]);
+#### ⑥进入QuestionsController控制器文件，修改store方法为：//用于表单提交并保持到数据库
+    public function store(Request $request)
+    {
+        $date = [
+            'title' => $request->get('title'),
+            'body' => $request->get('body'),
+            'user_id' => Auth::id()  //表示是谁发布的问题
+        ];
+        $question = Question::create($date);//保持到数据库中
+        return redirect(route('questions.show',[$question->id]));//跳转到问题显示页面，[]里面的内容是这个文章的ID
+    }
+注意：不要忘记在Question model里面填写$fillable字段。
+
+    protected $fillable = ['title','body','user_id'];    
+#### ⑦进入QuestionsController控制器文件，修改show方法为：
+    public function show($id)
+    {
+        $question = Question::find($id);
+        return view('questions.show',compact('question'));//传递到视图
+    }
+#### ⑧在questions文件夹下面创建一个名为show.blade.php的视图用于显示发布的问题：
+    @extends('layouts.app')
+    
+    @section('content')
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">{{ $question->title }}</div>
+    
+                        <div class="panel-body">
+                            {!! $question->body !!}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endsection

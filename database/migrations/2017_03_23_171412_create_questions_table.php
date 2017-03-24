@@ -16,7 +16,7 @@ class CreateQuestionsTable extends Migration
         Schema::create('questions', function (Blueprint $table) {
             $table->increments('id');
             $table->string('title');
-            $table->string('body');
+            $table->longText('body'); //不能用string，不然字段长度不够
             $table->integer('user_id')->unsigned();//关联user表，表示是谁发起的问题
             $table->integer('comments_count')->default(0);//有多少评论
             $table->integer('followers_count')->default(1);//有多少个关注，默认自己发表就关注了所以默认值为1

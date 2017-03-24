@@ -20,3 +20,8 @@ Route::get('email/verify/{token}',['as' => 'verify.email','uses' => 'EmailContro
 Auth::routes();
 
 Route::get('/home', 'HomeController@index');
+
+Route::resource('questions','QuestionsController',['names'=>[
+    'create' => 'questions.create',//   命名路由
+    'show' => 'questions.show'
+]]);
