@@ -400,3 +400,153 @@
             </div>
         </div>
     @endsection
+#### ⑨实现发布问题的表单验证：
+方法一：直接在控制器：QuestionsController里面的create方法里面的最前面添加如下代码即可
+    
+    $rulers = [
+        'title' =>'required|min:6',
+        'body' =>'required|min:16'
+    ];//验证的规则
+    $messages = [
+        'title.required' => '我是自定义的提示，不能为空哦！'
+    ];//自定义提示消息
+    $this->validate($request,$rulers,$messages);//靠这个方法来实现验证
+方法二：创建一个名为：StoreQuestionRequest的request来实现验证：
+    
+    php artisan make:request StoreQuestionRequest
+执行之后就会在app/Http目录下面出现一个Requests的文件夹，它里面就是刚刚创建的这个request，就可以在里面写验证代码了：
+    
+    <?php
+    
+    namespace App\Http\Requests;
+    
+    use Illuminate\Foundation\Http\FormRequest;
+    
+    class StoreQuestionRequest extends FormRequest
+    {
+        /**
+         * Determine if the user is authorized to make this request.
+         *
+         * @return bool
+         */
+        public function authorize()
+        {
+            return true;
+        }
+    
+        /**
+         * Get the validation rules that apply to the request.
+         *
+         * @return array
+         */
+        public function rules()
+        {
+            return [
+                'title' =>'required|min:6',
+                'body' =>'required|min:16'
+            ];
+        }
+    
+        public function messages()
+        {
+            return [
+                'title.required' => '我是自定义的提示，不能为空哦！'
+            ];
+        }
+    }
+然后只需要到QuestionsController里面在store方法里面依赖注入StoreQuestionRequest即可：
+    
+    public function store(StoreQuestionRequest $request)//这里是唯一需要修改的地方
+    {
+        $date = [
+            'title' => $request->get('title'),
+            'body' => $request->get('body'),
+            'user_id' => Auth::id()  //表示是谁发布的问题
+        ];
+        $question = Question::create($date);//保持到数据库中
+        return redirect(route('questions.show',[$question->id]));//跳转到问题显示页面，[]里面的内容是这个文章的ID
+    }
+
+
+最后：如果需要显示错误提示信息，并且填好了的字段内容不消失，就需要在实现了方法1或方法2后修改create.blade.php代码为如下：
+    
+    @extends('layouts.app')
+    
+    @section('content')
+        @include('vendor.ueditor.assets') {{--这行的作用是引入编辑器需要的 css,js 等文件，所以你不需要再手动去引入它们--}}
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">发布问题</div>
+                        <div class="panel-body">
+                            <form action="/questions" method="post" role="form">
+                                {{csrf_field()}}
+                                <div class="form-group{{ $errors->has('title') ? ' has-error' : '' }}">{{--这是为了显示错误时的样式，显示为红色--}}
+                                    <label for="title">问题名称</label>
+                                    <input type="text" class="form-control" name="title" value="{{ old('title') }}" placeholder="请输入问题名称">{{--这是为了保留原来提交的数据，避免用户重填--}}
+                                    @if ($errors->has('title'))    {{--这段就是为了显示相应的提示信息--}}
+                                        <span class="help-block">
+                                            <strong>{{ $errors->first('title') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="form-group{{ $errors->has('body') ? ' has-error' : '' }}">
+                                    <label for="body">问题内容</label>
+                                    <!-- 编辑器容器 -->
+                                    <script id="container" name="body" type="text/plain">
+                                        {{ old('body') }}  {{--这里要注意，不是放在里面，而是用放到标签之间--}}
+                                    </script>
+                                    @if ($errors->has('body'))
+                                        <span class="help-block">
+                                            <strong>{{ $errors->first('body') }}</strong>
+                                        </span>
+                                    @endif
+                                </div>
+                                <button type="submit" class="btn btn-primary pull-right">发布问题</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 实例化编辑器 -->
+        <script type="text/javascript">
+            var ue = UE.getEditor('container');
+            ue.ready(function() {
+                ue.execCommand('serverparam', '_token', '{{ csrf_token() }}'); // 设置 CSRF token.
+            });
+        </script>
+    @endsection
+ 
+#### ⑩美化、简化编辑器
+  1、clone 代码（自己下载下来后放到了网盘里面直接用也行）
+  
+    git clone https://github.com/JellyBool/simple-ueditor.git
+  2.用此项目的 ueditor 目录替换原来的 ueditor 目录。
+    
+  3.实例化编辑器的时候配置 toolbar ，主要是 toolbar 的配置（具体配置可参考UEditor官方文档）
+    
+    <script type="text/javascript">
+        var ue = UE.getEditor('container',{
+            toolbars: [
+                ['bold', 'italic', 'underline', 'strikethrough', 'blockquote', 'insertunorderedlist', 'insertorderedlist', 'justifyleft','justifycenter', 'justifyright',  'link', 'insertimage', 'fullscreen']
+            ],
+            elementPathEnabled: false,
+            enableContextMenu: false,
+            autoClearEmptyNode:true,
+            wordCount:false,
+            imagePopup:false,
+            autotypeset:{ indent: true,imageBlockLine: 'center' }
+        });
+        ue.ready(function() {
+            ue.execCommand('serverparam', '_token', '{{ csrf_token() }}'); // 设置 CSRF token.
+        });
+    </script>
+#### ⑪完善发布问题页面，不让未登录的用户发布问题。
+只要在QuestionsController里面添加一个构造方法即可，代码如下：
+    
+    public function __construct()
+    {
+        $this->middleware('auth')->except('index','show');//表示除了index和show展示页面不需要登录，其他需要登录才行
+    }

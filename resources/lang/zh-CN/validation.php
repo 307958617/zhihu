@@ -136,7 +136,7 @@ return [
         'hour'                  => '时',
         'minute'                => '分',
         'second'                => '秒',
-        'title'                 => '标题',
+        'title'                 => '问题名称',
         'content'               => '内容',
         'description'           => '描述',
         'excerpt'               => '摘要',
@@ -144,6 +144,7 @@ return [
         'time'                  => '时间',
         'available'             => '可用的',
         'size'                  => '大小',
+        'body'                  => '问题内容',
     ],
 
 ];
