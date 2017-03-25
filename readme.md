@@ -400,7 +400,7 @@
             </div>
         </div>
     @endsection
-#### ⑨实现发布问题的表单验证：
+### 2、实现发布问题的表单验证：
 方法一：直接在控制器：QuestionsController里面的create方法里面的最前面添加如下代码即可
     
     $rulers = [
@@ -519,7 +519,7 @@
         </script>
     @endsection
  
-#### ⑩美化、简化编辑器
+### 3、美化、简化编辑器
   1、clone 代码（自己下载下来后放到了网盘里面直接用也行）
   
     git clone https://github.com/JellyBool/simple-ueditor.git
@@ -543,7 +543,7 @@
             ue.execCommand('serverparam', '_token', '{{ csrf_token() }}'); // 设置 CSRF token.
         });
     </script>
-#### ⑪完善发布问题页面，不让未登录的用户发布问题。
+### 4、完善发布问题页面，不让未登录的用户发布问题。
 只要在QuestionsController里面添加一个构造方法即可，代码如下：
     
     public function __construct()
