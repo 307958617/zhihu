@@ -28,11 +28,4 @@ class StoreQuestionRequest extends FormRequest
             'body' =>'required|min:16'
         ];
     }
-
-    public function messages()
-    {
-        return [
-            'title.required' => '我是自定义的提示，不能为空哦！'
-        ];
-    }
 }

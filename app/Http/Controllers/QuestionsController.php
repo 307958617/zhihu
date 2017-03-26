@@ -60,7 +60,7 @@ class QuestionsController extends Controller
     public function show($id)
     {
         $question = Question::find($id);
-        return view('questions.show',compact('question'));
+        return view('questions.show',compact('question'));//传递到视图
     }
 
     /**

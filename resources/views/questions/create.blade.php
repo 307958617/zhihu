@@ -10,11 +10,11 @@
                     <div class="panel-body">
                         <form action="/questions" method="post" role="form">
                             {{csrf_field()}}
-                            <div class="form-group{{ $errors->has('title') ? ' has-error' : '' }}">
+                            <div class="form-group{{ $errors->has('title') ? ' has-error' : '' }}">{{--这是为了显示错误时的样式，显示为红色--}}
                                 <label for="title">问题名称</label>
-                                <input type="text" class="form-control" name="title" value="{{ old('title') }}" placeholder="请输入问题名称">
-                                @if ($errors->has('title'))
-                                    <span class="help-block">
+                                <input type="text" class="form-control" name="title" value="{{ old('title') }}" placeholder="请输入问题名称">{{--这是为了保留原来提交的数据，避免用户重填--}}
+                                @if ($errors->has('title'))    {{--这段就是为了显示相应的提示信息--}}
+                                <span class="help-block">
                                         <strong>{{ $errors->first('title') }}</strong>
                                     </span>
                                 @endif
@@ -23,7 +23,7 @@
                                 <label for="body">问题内容</label>
                                 <!-- 编辑器容器 -->
                                 <script id="container" name="body" type="text/plain">
-                                    {{ old('body') }}
+                                    {{ old('body') }}  {{--这里要注意，不是放在里面，而是用放到标签之间--}}
                                 </script>
                                 @if ($errors->has('body'))
                                     <span class="help-block">
@@ -42,7 +42,7 @@
     <script type="text/javascript">
         var ue = UE.getEditor('container',{
             toolbars: [
-                ['bold', 'italic', 'underline', 'strikethrough', 'blockquote', 'insertunorderedlist', 'insertorderedlist', 'justifyleft','justifycenter', 'justifyright',  'link', 'insertimage', 'print', 'fullscreen']
+                ['bold', 'italic', 'underline', 'strikethrough', 'blockquote', 'insertunorderedlist', 'insertorderedlist', 'justifyleft','justifycenter', 'justifyright',  'link', 'insertimage','print', 'fullscreen']
             ],
             elementPathEnabled: false,
             enableContextMenu: false,

@@ -15,13 +15,13 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('email/verify/{token}',['as' => 'verify.email','uses' => 'EmailController@verify']);
-
 Auth::routes();
 
 Route::get('/home', 'HomeController@index');
 
-Route::resource('questions','QuestionsController',['names'=>[
-    'create' => 'questions.create',//   命名路由
-    'show' => 'questions.show'
+Route::get('email/verify/{token}',['as' => 'verify.email','uses' => 'EmailController@verify']);
+
+Route::resource('questions','QuestionsController',['names'=>[  //命名路由
+    'create' => 'questions.create',// 用于显示提交问题的表单的页面
+    'show' => 'questions.show'  //用于发布问题后显示问题的页面
 ]]);

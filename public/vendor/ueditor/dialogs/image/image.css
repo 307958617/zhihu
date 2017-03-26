@@ -112,9 +112,8 @@
 #remote .right{
     display: block;
     float: right;
-    width: 90%;
+    width: 300px;
     height:10px;
-    margin-right: 5%;
 }
 #remote .row{
     margin-left: 20px;
@@ -185,7 +184,7 @@
 }
 #remote #preview{
     clear: both;
-    width: 100%;
+    width: 260px;
     height: 240px;
     z-index: 9999;
     margin-top: 10px;
@@ -892,7 +891,4 @@
 }
 #search .searchList .clearFloat{
     clear: both;
-}
-.wrapper .alignBar{
-    display: none;
 }
