@@ -550,3 +550,59 @@
     {
         $this->middleware('auth')->except('index','show');//表示除了index和show展示页面不需要登录，其他需要登录才行
     }
+### 5、定义话题与问题关系（即问题与话题是多对多关系）。
+①生成话题model和迁移表：
+    
+    php artisan make:model Topic -m
+②生成话题表即Topic迁移文件内容为：
+    
+    public function up()
+        {
+            Schema::create('topics', function (Blueprint $table) {
+                $table->increments('id');
+                $table->string('name');//话题名字
+                $table->text('bio')->nullable();//话题简介
+                $table->integer('questions_count')->default(0);//这个话题下面有多少个问题的总数
+                $table->integer('followers_count')->default(0);//这个话题的关注者数量
+                $table->timestamps();
+            });
+        }
+③同时到Topic model里面添加$fillable，同时定义与questions表的多对多关系:
+    
+    class Topic extends Model
+    {
+        protected $fillable = ['name','bio','questions_count','follower_count'];
+    
+        public function questions()//定义与questions表的多对多关系
+        {
+            return $this->belongsToMany(Question::class,'中间表名，这个参数可以自定义')->withTimestamps();
+        }
+    }
+④同时在Question model 添加与topics表的多对多关系添加如下代码：
+    
+    public function topics()
+    {
+        return $this->belongsToMany(Topic::class,'中间表名，这个参数可以自定义')->withTimestamps();
+    }
+⑤添加questions表与topics表的中间表：
+    
+    php artisan make:migration create_questions_topics_table --create=question_topic //--create是指定哪两个model对应表的关联表名
+    中间表内容为：
+    public function up()
+    {
+        Schema::create('question_topic', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('question_id')->unsigned()->index();
+            $table->integer('topic_id')->unsigned()->index();
+            $table->timestamps();
+        });
+    }
+⑥执行migrate命令，插入刚刚创建的两张表到数据库：
+    
+    php artisan migrate
+⑦最后在创建问题question的时候(本例是在QuestionsController里面的store方法里面)，指定相关的topic，并写入中间表：
+    
+    $question->topics()->attach($topics);//attach方法就可以关联了。
+
+    
+    
