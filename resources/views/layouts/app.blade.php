@@ -86,8 +86,6 @@
                 </div>
             @endif
         </div>
-
-
         @yield('content')
     </div>
 
@@ -97,5 +95,6 @@
         $('#flash-overlay-modal').modal();//用于显示模板
         $('div.alert').not('.alert-important').delay(3000).fadeOut(350);//用于控制显示时间
     </script>
+    @yield('js')
 </body>
 </html>

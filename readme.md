@@ -603,6 +603,32 @@
 ⑦最后在创建问题question的时候(本例是在QuestionsController里面的store方法里面)，指定相关的topic，并写入中间表：
     
     $question->topics()->attach($topics);//attach方法就可以关联了。
+### 6、引入select2，优化话题选择：
+①下载select2依赖的两个文件select2.min.css，select2.min.js文件到本地resources目录下面的assets目录
+②需要先运行npm install 下载各种包以便后面使用npm run dev等命令编译下载的两个文件到app.js和app.css里面
+③引入刚刚下载的js和css方法：
+1、打开resources/assets/js/bootstrap.js文件，在里面添加如下代码：
+    
+    require('./select2.min');//这是引入select2.min.js
+2、打开resources/assets/sass/app.scss文件，在里面添加如下代码：
 
+    @import "./../css/select2.min.css";//这是引入select2.min.css
+④执行编译命令进行编译：
     
-    
+    npm run dev
+⑤到需要用到的视图表单里面插入如下代码：（本例是在questions/create.blade.php里）
+**注意：到这里要修复一个bug，在公共模板layout/app.blade.php最后添加一个@yield('js')
+    然后将questions/create.blade.php中@include('vendor.ueditor.assets')代码放到
+    @section('js')与@endsection之间**
+添加的代码select2代码：
+
+    <div class="div form-group{{ $errors->has('topic') ? ' has-error' : '' }}">
+        <label for="topic">选择话题</label>
+        <select class="js-example-basic-multiple form-control" multiple="multiple">
+            <option value="AL">Alabama</option>
+            <option value="WY">Wyoming</option>
+        </select>
+    </div>
+同时在script标签里面添加：
+
+    $(".js-example-basic-multiple").select2();
