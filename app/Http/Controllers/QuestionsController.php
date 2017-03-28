@@ -76,7 +76,12 @@ class QuestionsController extends Controller
      */
     public function edit($id)
     {
-        //
+        $question = $this->questionRepository->findQuestionById_withTopics($id);
+        if(Auth::user()->owns($question)){         //判断用户是否是文章的发布者，如果是才能看到编辑界面，否则就跳转回去。这里的owns()方法需要到User model里面添加
+            return view('questions.edit',compact('question'));
+        }
+        flash('对不起，你不是作者不能编辑该文章！');
+        return back();
     }
 
     /**
@@ -86,9 +91,17 @@ class QuestionsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(StoreQuestionRequest $request, $id)//和store方法的验证规则一样
     {
-        //
+        $topics = $this->questionRepository->normalizeTopics($request->topics);
+        $question = $this->questionRepository->findQuestionById_withTopics($id);
+        $question->update([
+            'title'=>$request->get('title'),
+            'body' =>$request->get('body')
+        ]);
+
+        $question->topics()->sync($topics);//将关联关系写入中间表，注意：这里需要将attach方法改为sync方法，同步修改。
+        return redirect(route('questions.show',[$question->id]));//跳转到问题显示页面，[]里面的内容是这个文章的ID
     }
 
     /**

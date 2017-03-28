@@ -5,6 +5,7 @@ namespace App\Repositories;
 
 use App\Question;
 use App\Topic;
+use Illuminate\Database\Eloquent\Model;
 
 class QuestionRepository
 {
