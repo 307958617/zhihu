@@ -690,3 +690,52 @@
 3、最后在QuestionsController.php里的store方法里面将关联关系写入中间表：
     
     $question->topics()->attach($topics);//将关联关系写入中间表.这里的$topics就是话题id组成的数组
+### 7、将topics显示到问题页面，只需要改一句代码即可：
+    
+    public function show($id)
+    {
+        $question = Question::where('id',$id)->with('topics')->first();//这里with('topics')传递到视图引用
+        return view('questions.show',compact('question'));//传递到视图
+    }
+    
+  之后视图引用通过循环输出即可：
+    
+    @foreach($question->topics as $topic)
+        {{ $topic->name }}
+    @endforeach
+### 8、使用Repository模式重构代码：即可以将model和控制器controller分开并且可以提高代码的可维护和可读性,它主要是操作model的CRUD
+①到app目录下面创建名为：Repositories的文件夹，用于放置各种repository
+②在Repositories文件夹下创建一个名为：QuestionRepository.php的class，注意，这里的名称最好是model名+Repository
+这里修改QuestionsController里面的show方法为例：QuestionRepository.php代码如下：
+    
+    <?php
+    
+    namespace App\Repositories;
+    
+    
+    use App\Question;
+    
+    class QuestionRepository
+    {
+        public function findQuestionById_withTopics($id)//这个方法是自己定义的，要求就是可读性强
+        {
+            return Question::where('id',$id)->with('topics')->first();
+        }
+    }
+③将QuestionRepository.php通过依赖注入方式引入QuestionsController里面，代码如下：
+    
+    protected $questionRepository;
+        
+    public function __construct(QuestionRepository $questionRepository)
+    {
+        $this->middleware('auth')->except('index','show');//表示除了index和show展示页面不需要登录，其他需要登录才行（原来已有的代码）
+        $this->questionRepository = $questionRepository;//依赖注入QuestionRepository
+    }
+④重写QuestionsController里面的show方法如下：
+    
+    public function show($id)
+    {
+        $question = $this->questionRepository->findQuestionById_withTopics($id);
+        return view('questions.show',compact('question'));//传递到视图
+    }
+同理修改其他也一样，主要是讲model与controller分离。    
