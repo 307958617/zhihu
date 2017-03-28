@@ -63,7 +63,5 @@
         ue.ready(function() {
             ue.execCommand('serverparam', '_token', '{{ csrf_token() }}'); // 设置 CSRF token.
         });
-        //下面是select2的引入
-        $(".js-example-basic-multiple").select2();
     </script>
 @endsection
