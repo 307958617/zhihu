@@ -605,8 +605,11 @@
     $question->topics()->attach($topics);//attach方法就可以关联了。
 ### 6、引入select2，优化话题选择：
 ①下载select2依赖的两个文件select2.min.css，select2.min.js文件到本地resources目录下面的assets目录
+
 ②需要先运行npm install 下载各种包以便后面使用npm run dev等命令编译下载的两个文件到app.js和app.css里面
+
 ③引入刚刚下载的js和css方法：
+
 1、打开resources/assets/js/bootstrap.js文件，在里面添加如下代码：
     
     require('./select2.min');//这是引入select2.min.js
@@ -617,18 +620,73 @@
     
     npm run dev
 ⑤到需要用到的视图表单里面插入如下代码：（本例是在questions/create.blade.php里）
+
 **注意：到这里要修复一个bug，在公共模板layout/app.blade.php最后添加一个@yield('js')
     然后将questions/create.blade.php中@include('vendor.ueditor.assets')代码放到
     @section('js')与@endsection之间**
+
 添加的代码select2代码：
 
     <div class="div form-group{{ $errors->has('topic') ? ' has-error' : '' }}">
         <label for="topic">选择话题</label>
-        <select class="js-example-basic-multiple form-control" multiple="multiple">
-            <option value="AL">Alabama</option>
-            <option value="WY">Wyoming</option>
+        <select name="topics[]" id="topic" class="form-control" multiple="multiple">//这里需要注意，name必须使用数组形式，即topics[]
         </select>
+        @if ($errors->has('topic'))
+            <span class="help-block">
+                <strong>{{ $errors->first('topic') }}</strong>
+            </span>
+        @endif
     </div>
 同时在script标签里面添加：
 
-    $(".js-example-basic-multiple").select2();
+    //下面是select2的引入
+            $(document).ready(function () {
+                $('#topic').select2({
+                    placeholder:'select a topic',
+                    tags:true,//表示可以自己添加输入的值
+                    minimumInputLength: 1,
+                    ajax:{
+                        url:'/api/topics',//api的路径
+                        dataType:'json',
+                        delay:250,
+                        data:function (params) {
+                            return {
+                                q:params.term   //q代表传递到api的参数值，与$request->query('q')中的q对应
+                            }
+                        },
+                        processResults:function (data) {
+                            return {
+                                results:$.map(data.items,function (id,name) {//data.items就是api查询后传递回来的json数据即response()->json(['items'=>$topics])
+                                    return {id:id,text:name};                 //这里的$.map是遍历传过来的数据好显示到select2选择框
+                                })
+                            };
+                        }
+                    }
+                });
+            });
+⑥到api.php 路由文件添加如下代码：
+    
+    Route::middleware('api')->get('/topics', function (Request $request) {
+        $topics = \App\Topic::where('name','like','%'.$request->query('q').'%')
+                                                   ->pluck('id','name');//特别注意，这里需要用pluck()方法来提取数据
+        return response()->json(['items'=>$topics]);//这里的items就是传递到视图的data.items
+    });
+⑦处理使用select2传递过来的topics中自己定义的话题，即如果传过来的不是数字，就重新创建一个topic并返回改topic的id值即可：
+1、先在QuestionsController.php里面新建一个方法：
+    
+    private function normalizeTopics(array $topics){
+        return collect($topics)->map(function ($topic){ //通过collect()和map()方法遍历数组
+            if (is_numeric($topic)){   //如果是数字就返回数字
+                Topic::find($topic)->increment('questions_count');//将话题关联的问题数量+1
+                return (int)$topic;
+            }
+            $newTopic = Topic::create(['name'=>$topic,'questions_count'=>1]);//如果不是数字就表示没有这个话题因此新建一个topic，将问题数设置为1
+            return $newTopic->id;//返回这个topic的id值
+        })->toArray();//转换成数组
+    }
+2、然后在QuestionsController.php里的store方法里面使用normalizeTopics()方法：
+    
+    $topics = $this->normalizeTopics($request->topics);//这里的topics就是select2传递过来的数组数据
+3、最后在QuestionsController.php里的store方法里面将关联关系写入中间表：
+    
+    $question->topics()->attach($topics);//将关联关系写入中间表.这里的$topics就是话题id组成的数组

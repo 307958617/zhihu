@@ -32,10 +32,13 @@
                             </div>
                             <div class="div form-group{{ $errors->has('topic') ? ' has-error' : '' }}">
                                 <label for="topic">选择话题</label>
-                                <select class="js-example-basic-multiple form-control" multiple="multiple">
-                                    <option value="AL">Alabama</option>
-                                    <option value="WY">Wyoming</option>
+                                <select name="topics[]" id="topic" class="form-control" multiple="multiple">
                                 </select>
+                                @if ($errors->has('topic'))
+                                    <span class="help-block">
+                                        <strong>{{ $errors->first('topic') }}</strong>
+                                    </span>
+                                @endif
                             </div>
                             <button type="submit" class="btn btn-primary pull-right">发布问题</button>
                         </form>
@@ -62,6 +65,31 @@
         });
         ue.ready(function() {
             ue.execCommand('serverparam', '_token', '{{ csrf_token() }}'); // 设置 CSRF token.
+        });
+        //下面是select2的引入
+        $(document).ready(function () {
+            $('#topic').select2({
+                placeholder:'select a topic',
+                tags:true,//表示可以自己添加输入的值
+                minimumInputLength: 1,
+                ajax:{
+                    url:'/api/topics',//api的路径
+                    dataType:'json',
+                    delay:250,
+                    data:function (params) {
+                        return {
+                            q:params.term   //q代表传递到api的参数值，与$request->query('q')中的q对应
+                        }
+                    },
+                    processResults:function (data) {
+                        return {
+                            results:$.map(data.items,function (id,name) {//data.items就是api查询后传递回来的json数据即response()->json(['items'=>$topics])
+                                return {id:id,text:name};                 //这里的$.map是遍历传过来的数据好显示到select2选择框
+                            })
+                        };
+                    }
+                }
+            });
         });
     </script>
 @endsection
