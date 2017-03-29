@@ -741,7 +741,7 @@
         return view('questions.show',compact('question'));//传递到视图
     }
 同理修改其他也一样，主要是讲model与controller分离。
-## 步骤八、实现编辑问题、删除问题：
+## 步骤八、实现编辑问题、删除问题、显示问题：
 ### 1、编辑问题：
 ①创建编辑问题的视图文件：edit.blade.php,代码可以参考create.blade.php进行修改即可：需要修改的地方用《修》标识
 
@@ -876,5 +876,13 @@
         return redirect(route('questions.show',[$question->id]));//跳转到问题显示页面，[]里面的内容是这个文章的ID
     }
 ④有一个问题就是关于话题表里面的问题数量，只会增加不会减少的问题怎么解决？？？
-
+可以不用在topics表里面的questions_count字段，自己直接在QuestionRepository里面添加一个方法：
+    
+    public function getNumbOfQuestions_byTopicId($id)
+    {
+        $topic = Topic::withCount('questions')->find($id);
+        return $topic->questions_count;
+    }   
 ### 2、删除问题：
+①在QuestionRepository里面增加一个方法：
+    

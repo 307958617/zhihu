@@ -25,6 +25,11 @@ class User extends Authenticatable
         return $this->id == $model->user_id;
     }
 
+    public function questions()
+    {
+        return $this->hasMany(Question::class);
+    }
+
     /**
      * The attributes that should be hidden for arrays.
      *

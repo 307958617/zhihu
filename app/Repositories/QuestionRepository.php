@@ -14,6 +14,11 @@ class QuestionRepository
         return Question::where('id',$id)->with('topics')->first();
     }
 
+    public function getAllQuestions()
+    {
+        return Question::all();
+    }
+
     public function createQuestion(array $data)
     {
         return Question::create($data);
@@ -29,5 +34,21 @@ class QuestionRepository
             $newTopic = Topic::create(['name'=>$topic,'questions_count'=>1]);//如果不是数字就表示没有这个话题因此新建一个topic，将问题数设置为1
             return $newTopic->id;//返回这个topic的id值
         })->toArray();//转换成数组
+    }
+
+    public function getNumbOfQuestions_byTopicId($id)
+    {
+        $topic = Topic::withCount('questions')->find($id);
+        return $topic->questions_count;
+    }
+
+    public function getTopicByID($id)
+    {
+       return $topic = Topic::find($id);
+    }
+
+    public function delQuestionById($id)
+    {
+        Question::destroy($id);
     }
 }

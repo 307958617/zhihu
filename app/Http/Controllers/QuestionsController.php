@@ -24,7 +24,8 @@ class QuestionsController extends Controller
 
     public function index()
     {
-        //
+        $questions = $this->questionRepository->getAllQuestions();
+        return view('questions.index',compact('questions'));
     }
 
     /**
@@ -112,6 +113,6 @@ class QuestionsController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $this->questionRepository->delQuestionById($id);
     }
 }
