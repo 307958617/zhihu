@@ -741,7 +741,7 @@
         return view('questions.show',compact('question'));//传递到视图
     }
 同理修改其他也一样，主要是讲model与controller分离。
-## 步骤八、实现编辑问题、删除问题、显示问题：
+## 步骤八、实现编辑问题、显示问题列表、删除问题、：
 ### 1、编辑问题：
 ①创建编辑问题的视图文件：edit.blade.php,代码可以参考create.blade.php进行修改即可：需要修改的地方用《修》标识
 
@@ -883,6 +883,6 @@
         $topic = Topic::withCount('questions')->find($id);
         return $topic->questions_count;
     }   
-### 2、删除问题：
+### 2、显示问题列表：
 ①在QuestionRepository里面增加一个方法：
     
