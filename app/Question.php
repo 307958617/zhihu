@@ -17,4 +17,9 @@ class Question extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function scopePublished($query)//定义发布限制条件，注意名称的写法 小写的scope+第一个字母大写的Published，采用驼峰法。
+    {
+        return $query->where('is_hidden','F');
+    }
 }

@@ -14,9 +14,14 @@ class QuestionRepository
         return Question::where('id',$id)->with('topics')->first();
     }
 
+    public function getAllQuestions_published()
+    {
+        return Question::published()->latest('updated_at')->get();//这里的published()方法就是Question model的scopePublished()方法。
+    }
+
     public function getAllQuestions()
     {
-        return Question::all();
+        return Question::latest('updated_at')->get();
     }
 
     public function createQuestion(array $data)

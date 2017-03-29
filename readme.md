@@ -741,7 +741,7 @@
         return view('questions.show',compact('question'));//传递到视图
     }
 同理修改其他也一样，主要是讲model与controller分离。
-## 步骤八、实现编辑问题、显示问题列表、删除问题、：
+## 步骤八、实现编辑问题、显示问题列表、删除问题：
 ### 1、编辑问题：
 ①创建编辑问题的视图文件：edit.blade.php,代码可以参考create.blade.php进行修改即可：需要修改的地方用《修》标识
 
@@ -884,5 +884,92 @@
         return $topic->questions_count;
     }   
 ### 2、显示问题列表：
-①在QuestionRepository里面增加一个方法：
+①创建显示问题列表的视图questions/index.blade.php,代码内容：
+    
+    @extends('layouts.app')
+    
+    @section('content')
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    @foreach($questions as $question)
+                        <div class="media">//这是媒体对象的样式
+                            <div class="media-left">
+                                <a href="">
+                                    <img style="border-radius:50%" src="{{$question->user->avatar}}" alt="{{$question->user->name}}">
+                                </a>
+                            </div>
+                            <div class="media-body">
+                                <h4>
+                                    <a href="/questions/{{$question->id}}">{{ $question->title }} </a>//显示具体文章的页面
+                                </h4>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    @endsection
+②QuestionsController里面的index()方法代码如下：
+
+    public function index()
+    {
+        $questions = $this->questionRepository->getAllQuestions();//这里是得到所有问题
+        return view('questions.index',compact('questions'));
+    }
+    
+  getAllQuestions()方法在QuestionRepository里面代码如下：
+    
+    public function getAllQuestions()
+    {
+        return Question::latest('updated_at')->get();
+    }
+  
+③引入query-Scope方法，实现自定义条件查询。虽然第②步没问题，但是这里需要引入一个限制，即如果问题表questions的is_hidden字段为T，那么就不能显示这条问题。
+###### 第一步：在Question model里面添加：
+    
+    public function scopePublished($query)//定义发布限制条件，注意名称的写法 小写的scope+第一个字母大写的Published，采用驼峰法。
+    {
+        return $query->where('is_hidden','F')->get();
+    }
+###### 第二步：在QuestionRepository里面新写一个方法获取所有的问题：
+
+    public function getAllQuestions_published()
+    {
+        return Question::published()->latest('update_at')->get();//这里的published()方法就是Question model的scopePublished()方法变化而来，其实就是一个东西。
+    }
+###### 第三步：修改②QuestionsController里面的index()方法，代码如下：
+
+    public function index()
+    {
+        $questions = $this->questionRepository->getAllQuestions_published();
+        return view('questions.index',compact('questions'));
+    }
+### 3、删除问题：
+①在QuestionRepository里面新写一个方法：
+    
+    public function delQuestionById($id)
+    {
+        Question::destroy($id);
+    }
+②在QuestionsController里面的destroy()方法使用delQuestionById，代码如下：
+  
+    public function destroy($id)
+    {
+        $this->questionRepository->delQuestionById($id);
+        return redirect('/questions');
+    }
+③在show.blade.php这个视图里面添加入一个删除按钮：
+    
+    <div class="action">
+        @if(Auth::check() && Auth::user()->owns($question)) {{--这是判断权限的如只有登录并且是这个问题的发起者成能删除它，这里的owns()方法在上面也提到过，写在User model里面的--}}
+            <form action="/questions/{{$question->id}}" method="post">
+                {{method_field('DELETE')}}//这里需要注意，使用的是DELETE方法才能触发destory()方法
+                {{csrf_field()}}
+                <button class="btn" style="background:transparent;color: red">删除</button> {{--transparent这是一个css样式,背景透明--}}
+            </form>
+        @endif
+    </div>
+    
+    
     
