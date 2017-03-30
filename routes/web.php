@@ -25,3 +25,5 @@ Route::resource('questions','QuestionsController',['names'=>[  //命名路由
     'create' => 'questions.create',// 用于显示提交问题的表单的页面
     'show' => 'questions.show'  //用于发布问题后显示问题的页面
 ]]);
+
+Route::post('questions/{question}/answers/store',['as'=>'answers.store','uses'=>'AnswersController@store']);
