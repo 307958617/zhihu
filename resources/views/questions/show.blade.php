@@ -3,7 +3,7 @@
 @section('content')
     <div class="container">
         <div class="row">
-            <div class="col-md-8 col-md-offset-2">
+            <div class="col-md-8 col-md-offset-1">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         {{ $question->title }}
@@ -41,9 +41,9 @@
                                     </a>
                                 </div>
                                 <div class="media-body">
-                                    <h4 class="media-heading">
+                                    <span class="media-heading">
                                         <a href="">{{$answer->user->name}}</a>
-                                    </h4>
+                                    </span>
                                     {!!  $answer->body  !!}
                                 </div>
                             </div>
@@ -72,6 +72,22 @@
                 </div>
 {{--上面是实现问题答案提交功能代码--}}
             </div>
+{{--下面是关注问题模块--}}
+            <div class="col-md-3">
+                <div class="panel panel-default" style="text-align: center">
+                    <div class="panel-heading">
+                        <h1>{{ $followersCount }}</h1>
+                        <span>关注者</span>
+                    </div>
+                    <div class="panel-body">
+                        <a href="/questions/{{ $question->id }}/follow" class="btn btn-default {{Auth::user()->followed($question->id)?'btn-success':''}}">
+                            {{Auth::user()->followed($question->id)?'取消关注':'关注该问题'}}
+                        </a>
+                        <a href="#editor" class="btn btn-primary">撰写答案</a>
+                    </div>
+                </div>
+            </div>
+{{--上面是关注问题模块--}}
         </div>
     </div>
 @endsection

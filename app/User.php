@@ -25,6 +25,21 @@ class User extends Authenticatable
         return $this->id == $model->user_id;
     }
 
+    public function follows()  //定义users与questions表的多对多关系
+    {
+        return $this->belongsToMany(Question::class)->withTimestamps();
+    }
+
+    public function followThis($question)
+    {
+        return $this->follows()->toggle($question);//这就是文档讲的切换关联
+    }
+
+    public function followed($question) //表示关注了这个问题
+    {
+        return !! $this->follows()->where('question_id',$question)->count(); //注意，这里的两个！表示强制取反，返回是bull值
+    }
+
     public function questions()
     {
         return $this->hasMany(Question::class);

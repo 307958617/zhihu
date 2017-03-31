@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreQuestionRequest;
+use App\Repositories\FollowRepository;
 use App\Repositories\QuestionRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,11 +16,13 @@ class QuestionsController extends Controller
      * @return \Illuminate\Http\Response
      */
     protected $questionRepository;
+    protected $followRepository;
 
-    public function __construct(QuestionRepository $questionRepository)
+    public function __construct(QuestionRepository $questionRepository,FollowRepository $followRepository)
     {
         $this->middleware('auth')->except('index','show');//表示除了index和show展示页面不需要登录，其他需要登录才行
         $this->questionRepository = $questionRepository;//依赖注入QuestionRepository
+        $this->followRepository = $followRepository; //依赖注入FollowRepository
     }
 
     public function index()
@@ -66,7 +69,8 @@ class QuestionsController extends Controller
     public function show($id)
     {
         $question = $this->questionRepository->findQuestionById_withTopics($id);
-        return view('questions.show',compact('question'));//传递到视图
+        $followersCount = $this->followRepository->getNumbOfFollowers_byQuestionId($question->id);
+        return view('questions.show',compact('question','followersCount'));//传递到视图
     }
 
     /**

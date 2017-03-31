@@ -18,6 +18,11 @@ class Question extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function followers()
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
     public function answers()
     {
         return $this->hasMany(Answer::class);

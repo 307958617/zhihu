@@ -1172,3 +1172,247 @@
         </div>
     @endforeach
     {{--上面是显示问题答案的代码--}}
+## 步骤十、实现用户关注问题：
+①在show.blade.php视图添加一个用户关注的模块：show.blade.php修改后代码如下：
+
+    @extends('layouts.app')
+    
+    @section('content')
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-1">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            {{ $question->title }}
+                            @foreach($question->topics as $topic)
+                                <div class="badge">{{ $topic->name }}</div>
+                            @endforeach
+                        </div>
+    
+                        <div class="panel-body">
+                            {!! $question->body !!}
+                        </div>
+                        <div class="action">
+                            @if(Auth::check() && Auth::user()->owns($question)) {{--这是判断权限的如只有登录并且是这个问题的发起者成能删除它--}}
+                                <form action="/questions/{{$question->id}}" method="post">
+                                    {{method_field('DELETE')}}
+                                    {{csrf_field()}}
+                                    <button class="btn" style="background:transparent;color: red">删除</button> {{--transparent这是一个css样式,背景透明--}}
+                                </form>
+                            @endif
+                        </div>
+                    </div>
+    {{--下面是实现问题答案提交功能代码--}}
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            共有 {{ $question->answers_count }} 个答案
+                        </div>
+    
+                        <div class="panel-body">
+    {{--下面是显示问题答案的代码--}}
+                            @foreach($question->answers as $answer)
+                                <div class="media">
+                                    <div class="media-left">
+                                        <a href="">
+                                            <img style="border-radius:50%" src="{{$answer->user->avatar}}" alt="{{$answer->user->name}}">
+                                        </a>
+                                    </div>
+                                    <div class="media-body">
+                                        <span class="media-heading">
+                                            <a href="">{{$answer->user->name}}</a>
+                                        </span>
+                                        {!!  $answer->body  !!}
+                                    </div>
+                                </div>
+                            @endforeach
+    {{--上面是显示问题答案的代码--}}
+                            <div class="action">
+                                @if(Auth::check()) {{--这是判断权限的如只有登录的用户才能回答问题添加答案--}}
+                                <form action="/questions/{{$question->id}}/answers/store" method="post"> {{--注意提交的地址--}}
+                                    {{csrf_field()}}
+                                    <div class="form-group{{ $errors->has('body') ? ' has-error' : '' }}">
+                                        <!-- 编辑器容器 -->
+                                        <script id="container" name="body" type="text/plain">
+                                            {{ old('body') }}  {{--这里要注意，不是放在里面，而是用放到标签之间--}}
+                                        </script>
+                                        @if ($errors->has('body'))
+                                            <span class="help-block">
+                                            <strong>{{ $errors->first('body') }}</strong>
+                                        </span>
+                                        @endif
+                                    </div>
+                                    <button class="btn btn-primary pull-right">发布答案</button> {{--transparent这是一个css样式,背景透明--}}
+                                </form>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+    {{--上面是实现问题答案提交功能代码--}}
+                </div>
+    {{--下面是关注问题模块--}}
+                <div class="col-md-3">
+                    <div class="panel panel-default" style="text-align: center">
+                        <div class="panel-heading">
+                            <h1>{{$question->followers_count}}</h1>
+                            <span>关注者</span>
+                        </div>
+                        <div class="panel-body">
+                            <a href="/questions/{{ $question->id }}/follow" class="btn btn-default">关注该问题</a>
+                            <a href="#editor" class="btn btn-primary">撰写答案</a>
+                        </div>
+                    </div>
+                </div>
+    {{--上面是关注问题模块--}}
+            </div>
+        </div>
+    @endsection
+    {{--下面是实现问题答案提交功能的富文本框依赖程序--}}
+    @section('js')
+        @include('vendor.ueditor.assets')
+        <script type="text/javascript">
+            var ue = UE.getEditor('container',{
+                toolbars: [
+                    ['bold', 'italic', 'underline', 'strikethrough', 'blockquote', 'insertunorderedlist', 'insertorderedlist', 'justifyleft','justifycenter', 'justifyright',  'link', 'insertimage', 'fullscreen']
+                ],
+                elementPathEnabled: false,
+                enableContextMenu: false,
+                autoClearEmptyNode:true,
+                wordCount:false,
+                imagePopup:false,
+                autotypeset:{ indent: true,imageBlockLine: 'center' }
+            });
+            ue.ready(function() {
+                ue.execCommand('serverparam', '_token', '{{ csrf_token() }}'); // 设置 CSRF token.
+            });
+        </script>
+    @endsection
+    {{--上面是实现问题答案提交功能的富文本框依赖程序--}}
+②创建用户与问题的之间的多对多关系中间表（也就是关注表）：question_user 表：
+  
+  1、创建迁移文件：
+  
+    php artisan make:migration crate_question_user_table --create=question_user //创建迁移文件
+  2、修改迁移文件，内容如下：
+    
+    public function up()
+    {
+        Schema::create('question_user', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('question_id')->unsigned()->index();
+            $table->integer('user_id')->unsigned()->index();
+            $table->timestamps();
+        });
+    }
+  3、在数据库添加该表：
+      
+     php artisan migrate
+③为上面的中间表question_user表创建一个model来操作这个表：
+    
+    php artisan make:model Follow
+    内容如下：
+    class Follow extends Model
+    {
+        protected $table = 'question_user';
+        
+        protected $fillable = ['question_id','user_id'];
+    }
+    注意：本来到这里之后，应该到users表和questions表定义关联关系，但是这里我们有更好的办法，直接在User model添加一个follows()方法更加简单方便
+④在User model 添加follows()方法：
+    
+    public function follows($question)  //这里直接创建一个关注的数据即可
+    {
+        return Follow::create([
+            'question_id'=>$question,
+            'user_id' => $this->id
+        ]);
+    }
+⑤在web.blade.php路由文件创建一个新的路由：
+    
+    Route::get('questions/{question}/follow','QuestionFollowController@follow');
+⑥创建一个控制器：QuestionFollowController：
+    
+    php artisan make:controller QuestionFollowController
+    内容如下：
+    <?php
+    
+    namespace App\Http\Controllers;
+    
+    use Auth;
+    use Illuminate\Http\Request;
+    
+    class QuestionFollowController extends Controller
+    {
+        public function follow($question)
+        {
+            Auth::user()->follows($question); //这里的follows方法就是在User model里面创建的方法。
+            return back();
+        }
+    }
+⑦注意，上面第④步有一个问题，就是点了关注就会+1，而不能取消关注，这里需要修改上面方法，还是需要定义两个表之间的关系：
+    
+    在User model定义与questions表的多对多关系，修改follows()方法为：
+    public function follows()  //定义users与questions表的多对多关系
+    {
+        return $this->belongsToMany(Question::class)->withTimestamps();
+    }
+    同时添加如下方法：
+    public function followThis($question)
+    {
+        return $this->follows()->toggle($question);//这就是文档讲的切换关联
+    }
+    最后在QuestionFollowController控制器里将follow()方法改为：followThis()方法即可；（其实这里可以看出，上面创建的Follow model就没有上面用了，可以忽略了）
+⑧注意，这里还有个问题呢，就是关注按钮的样式不会自动切换，这里就需要判断，根据question_user表是否有数据来切换样式：
+在User model里面再添加一个方法：followed()方法：
+    
+    public function followed($question) //表示关注了这个问题
+    {
+        return !! $this->follows()->where('question_id',$question)->count(); //注意，这里的两个！表示强制取反，返回是bull值
+    }
+    然后修改show.blade.php中的关注按钮的样式：
+    <a href="/questions/{{ $question->id }}/follow" class="btn btn-default {{Auth::user()->followed($question->id)?'btn-success':''}}">
+        {{Auth::user()->followed($question->id)?'取消关注':'关注该问题'}}
+    </a>
+⑨还有一个地方需要注意，只有登录的用户才能关注问题，那么就需要在QuestionFollowController控制器添加一个构造方法，添加Auth这个middleware：
+    
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+⑩还有一个就是某个问题关注者的人数，是在问题表里面的followers_count字段提出来的，但是这个不是很好的方法。用withCount方法才比较好：
+    
+    1、创建一个FollowRepository.php的class：
+        <?php
+        
+        namespace App\Repositories;
+        
+        use App\Question;
+        
+        class FollowRepository
+        {
+            public function getNumbOfFollowers_byQuestionId($question)
+            {
+                $q = Question::withCount('followers')->find($question);
+                return $q->followers_count;
+            }
+        }
+        
+    2、在QuestionsController里面，依赖注入上面的FollowRepository,代码如下：
+        protected $questionRepository;
+        protected $followRepository;
+    
+        public function __construct(QuestionRepository $questionRepository,FollowRepository $followRepository)
+        {
+            $this->middleware('auth')->except('index','show');//表示除了index和show展示页面不需要登录，其他需要登录才行
+            $this->questionRepository = $questionRepository;//依赖注入QuestionRepository
+            $this->followRepository = $followRepository; //依赖注入FollowRepository
+        }
+    3、再修改在QuestionsController里面的show方法，代码如下：
+        
+        public function show($id)
+        {
+            $question = $this->questionRepository->findQuestionById_withTopics($id);
+            $followersCount = $this->followRepository->getNumbOfFollowers_byQuestionId($question->id);//传递问题的关注者数量到视图
+            return view('questions.show',compact('question','followersCount'));//传递到视图
+        }
+
+    
