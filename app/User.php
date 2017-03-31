@@ -25,14 +25,14 @@ class User extends Authenticatable
         return $this->id == $model->user_id;
     }
 
-    public function follows()  //定义users与questions表的多对多关系
+    public function follows()  //定义users与questions表的多对多关系,表示这个用户关注了多少个问题。
     {
         return $this->belongsToMany(Question::class)->withTimestamps();
     }
 
     public function followThis($question)
     {
-        return $this->follows()->toggle($question);//这就是文档讲的切换关联
+        return $this->follows()->toggle($question);//这就是文档讲的切换关联，即关注与取消关注。
     }
 
     public function followed($question) //表示关注了这个问题

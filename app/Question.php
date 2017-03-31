@@ -18,7 +18,7 @@ class Question extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function followers()
+    public function followers() //表示这个问题有多少个关注者，同时也是定义两个表的关联关系
     {
         return $this->belongsToMany(User::class)->withTimestamps();
     }
