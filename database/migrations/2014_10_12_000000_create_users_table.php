@@ -26,8 +26,8 @@ class CreateUsersTable extends Migration
             $table->integer('comments_count')->default(0);//用户留下了多少评论的次数记录
             $table->integer('favorites_count')->default(0);//用户收藏了的次数记录
             $table->integer('likes_count')->default(0);//用户获得点赞的次数记录
-            $table->integer('flowers_count')->default(0);//用户关注的次数记录
-            $table->integer('flowering_count')->default(0);//用户被关注的次数记录
+            $table->integer('followers_count')->default(0);//用户关注的次数记录
+            $table->integer('following_count')->default(0);//用户被关注的次数记录
             $table->json('settings')->nullable();//用户的基本信息，如地址，可以为空
             $table->rememberToken();
             $table->timestamps();

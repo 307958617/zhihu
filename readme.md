@@ -1537,3 +1537,66 @@
 ⑤最后的最后，有了上面的步骤，就可以在api中通过下面的方法得到请求api的用户数据：
     
     return Auth::guard('api')->user();
+## 步骤十二、实现用户之间的关注，即用户关注用户：
+### 1、创建一个用户之间关注信息的表：
+    php artisan make:migration create_followers_table --create=followers
+    内容如下：
+    public function up()
+    {
+        Schema::create('followers', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('follower_id')->unsigned()->index();//表示关注者，即发起关注的人的id
+            $table->integer('followed_id')->unsigned()->index();//表示被关注者的id
+            $table->timestamps();
+        });
+    }
+    然后执行：
+    php artisan migrate //将表写入数据库中
+### 2、到User model里面声明一个多对多关系，即用户表与用户表自己的关系：
+    
+    public function follower()
+    {
+        return $this->belongsToMany(self::class,'followers','follower_id','followed_id')->withTimestamps();
+    }
+### 3、在show.blade.php里面添加显示关注用户的视图代码：
+    
+    {{--下面是关注用户模块--}}
+    <div class="col-md-3">
+        <div class="panel panel-default" style="text-align: center">
+            <div class="panel-heading">
+                <h5>关于作者</h5>
+            </div>
+            <div class="panel-body">
+                <div class="media">
+                    <div class="media-left">
+                        <a href="">
+                            <img style="border-radius:50%" src="{{$question->user->avatar}}" alt="{{$question->user->name}}">
+                        </a>
+                    </div>
+                    <div class="media-body">
+                        <h5 class="media-heading">
+                            <a href="">{{$question->user->name}}</a>
+                        </h5>
+                    </div>
+                </div>
+                <div class="user-status" style="display: flex;margin-top: 20px">
+                    <div class="status-item" style="padding: 2px 20px;">
+                        <div class="status-text">问题</div>
+                        <div class="status-count">{{$question->user->questions_count}}</div>
+                    </div>
+                    <div class="status-item" style="padding: 2px 20px;">
+                        <div class="status-text">回答</div>
+                        <div class="status-count">{{$question->user->answers_count}}</div>
+                    </div>
+                    <div class="status-item" style="padding: 2px 20px;">
+                        <div class="status-text">关注者</div>
+                        <div class="status-count">{{$question->user->followers_count}}</div>
+                    </div>
+                </div>
+                <question_follow_button question="{{ $question->id }}" user="{{ Auth::id() }}"></question_follow_button>
+                <a href="#editor" class="btn btn-primary">发送私信</a>
+            </div>
+        </div>
+    </div>
+    {{--上面是关注用户模块--}}
+### 4、

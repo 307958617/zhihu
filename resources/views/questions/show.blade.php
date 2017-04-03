@@ -91,6 +91,45 @@
                 </div>
             </div>
 {{--上面是关注问题模块--}}
+{{--下面是关注用户模块--}}
+            <div class="col-md-3">
+                <div class="panel panel-default" style="text-align: center">
+                    <div class="panel-heading">
+                        <h5>关于作者</h5>
+                    </div>
+                    <div class="panel-body">
+                        <div class="media">
+                            <div class="media-left">
+                                <a href="">
+                                    <img style="border-radius:50%" src="{{$question->user->avatar}}" alt="{{$question->user->name}}">
+                                </a>
+                            </div>
+                            <div class="media-body">
+                                <h5 class="media-heading">
+                                    <a href="">{{$question->user->name}}</a>
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="user-status" style="display: flex;margin-top: 20px">
+                            <div class="status-item" style="padding: 2px 20px;">
+                                <div class="status-text">问题</div>
+                                <div class="status-count">{{$question->user->questions_count}}</div>
+                            </div>
+                            <div class="status-item" style="padding: 2px 20px;">
+                                <div class="status-text">回答</div>
+                                <div class="status-count">{{$question->user->answers_count}}</div>
+                            </div>
+                            <div class="status-item" style="padding: 2px 20px;">
+                                <div class="status-text">关注者</div>
+                                <div class="status-count">{{$question->user->followers_count}}</div>
+                            </div>
+                        </div>
+                        <question_follow_button question="{{ $question->id }}" user="{{ Auth::id() }}"></question_follow_button>
+                        <a href="#editor" class="btn btn-primary">发送私信</a>
+                    </div>
+                </div>
+            </div>
+{{--上面是关注用户模块--}}
         </div>
     </div>
 @endsection
