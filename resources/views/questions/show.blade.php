@@ -79,12 +79,15 @@
                         <h1>{{ $followersCount }}</h1>
                         <span>关注者</span>
                     </div>
+                    @if(Auth::check())
                     <div class="panel-body">
-                        <a href="/questions/{{ $question->id }}/follow" class="btn btn-default {{Auth::user()->followed($question->id)?'btn-success':''}}">
-                            {{Auth::user()->followed($question->id)?'取消关注':'关注该问题'}}
-                        </a>
+                        {{--<a href="/questions/{{ $question->id }}/follow" class="btn btn-default {{Auth::user()->followed($question->id)?'btn-success':''}}">--}}
+                            {{--{{Auth::user()->followed($question->id)?'取消关注':'关注该问题'}}--}}
+                        {{--</a>--}}
+                        <question_follow_button question="{{ $question->id }}" user="{{ Auth::id() }}"></question_follow_button>
                         <a href="#editor" class="btn btn-primary">撰写答案</a>
                     </div>
+                    @endif
                 </div>
             </div>
 {{--上面是关注问题模块--}}

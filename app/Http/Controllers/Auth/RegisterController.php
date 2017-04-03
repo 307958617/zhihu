@@ -69,6 +69,7 @@ class RegisterController extends Controller
             'avatar' => '/images/avatars/default.png', //此文件是放在public目录下面的
             'confirmation_token' => str_random(40), //生成邮箱验证的随机token字符串
             'password' => bcrypt($data['password']),
+            'api_token' => str_random(60) // 生成用于api验证的随机token字符串
         ]);//这里需要注意：将avatar和confirmation_token这两个字段添加到User Model的fillable里面
         $this->sendVerifyEmailTo($user);
         return $user;

@@ -1414,5 +1414,126 @@
             $followersCount = $this->followRepository->getNumbOfFollowers_byQuestionId($question->id);//传递问题的关注者数量到视图
             return view('questions.show',compact('question','followersCount'));//传递到视图
         }
-
+## 步骤十一、在laravel中使用Vue.js实现组件化：
+### 1、首先需要让phpstorm支持Vue.js：
+    在设置->plugins->输入vue.js然后点击查询，然后安装之后->重新启动phpstorm即可。
+### 2、laravel项目里面使用vue主要操作的目录位置为：
+    resources->assets->js里面的东西
+### 3、将show.blade.php中的关注按钮做成一个组件，步骤如下：
+①在resources/assets/js/components目录下面创建一个名为：QuestionFollowButton.vue的文件，这即为关注按钮组件，内容如下：
     
+    <template>
+        <button class="btn btn-default"
+                :class="{'btn-success':followed}"
+                v-text="text"
+                @click="follow"
+        >
+        </button>
+    </template>
+    
+    <script>
+        export default {
+            props:['question','user'],//这里的数据就是从show.blade.php视图里面传递进来的两个值
+            data() {
+                return {
+                    followed:false
+                }
+            },
+            mounted() {
+                axios.post('http://zhihu/api/question/follower',{'q':this.question,'u':this.user}).then(function (response) { //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+                    this.followed = response.data.followed;
+                    console.log(response.data.followed)
+                }.bind(this));  //注意这里需要用到.bind(this)不然要报错，找不到followed
+            },
+            computed: { //计算属性
+                text() {
+                    return this.followed ? '取消关注':'关注该问题'
+                }
+            },
+            methods:{
+                follow() {
+                    axios.post('http://zhihu/api/question/follow',{'q':this.question,'u':this.user}).then(function (response) { //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+                        this.followed = response.data.followed;
+                        console.log(response.data.followed)
+                    }.bind(this));  //注意这里需要用到.bind(this)不然要报错，找不到followed
+                }
+            }
+        }
+    </script>
+②在resources/assets/js下的app.js文件里面注册上面创建的组件：即添加下面一行代码到里面即可
+    
+    Vue.component('question_follow_button', require('./components/QuestionFollowButton.vue'));
+③到show.blade.php文件关注按钮的位置，引入注册的这个组件，即：
+
+    <div class="panel-body">
+        {{--<a href="/questions/{{ $question->id }}/follow" class="btn btn-default {{Auth::user()->followed($question->id)?'btn-success':''}}">--}}
+            {{--{{Auth::user()->followed($question->id)?'取消关注':'关注该问题'}}--}}
+        {{--</a>--}}
+        <question_follow_button question="{{ $question->id }}" user="{{ Auth::id() }}"></question_follow_button> //用这个组件替换上面的<a>标签的按钮，这里的两个参数是要传到QuestionFollowButton.vue里面的props里面的。
+        <a href="#editor" class="btn btn-primary">撰写答案</a>
+    </div>
+④需要执行npm run dev进行编译之后才能正常显示，不然要报错。 
+⑤不要忘记在api路由文件里面添加一个路由，给①来调用：
+    
+    Route::middleware('api')->post('question/follower', function (Request $request) {
+        $followed = \App\Follow::where('question_id',$request->get('q'))->where('user_id',$request->get('u'))->count();
+        if($followed > 0)
+            return response()->json(['followed'=> true]);
+        else
+            return response()->json(['followed'=> false]);
+    });
+    
+    Route::middleware('api')->post('question/follow', function (Request $request) {
+        $followed = \App\Follow::where('question_id',$request->get('q'))->where('user_id',$request->get('u'))->first();
+        if($followed !== null){//如果这条数据不为空，则说明存在关注，那么点击就会将这条记录删除然后返回一个false
+            $followed->delete();
+            return response()->json(['followed'=> false]);
+        }
+        //如果为空，则说明没有关注，我们就需要添加一条记录然后返回true
+        \App\Follow::create([
+            'question_id' => $request->get('q'),
+            'user_id' => $request->get('u')
+        ]);
+        return response()->json(['followed'=> true]);
+    });
+### 4、实现登录验证：如果第⑤步中的api路由添加一个middleware('auth'),那么就会报错401 (Unauthorized)，解决方法如下：
+①为users表添加一个api_token字段：
+    
+    php artisan make:migration add_api_token_to_users_table --table=users 
+    该迁移文件其内容如下：
+    public function up()
+    {//添加一个字段api_token
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('api_token',64)->unique();
+        });
+    }
+
+    public function down()
+    {//删除一个字段api_token
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn(['api_token']);
+        });
+    }
+②执行php artisan migrate，在数据库的users表插入一个api_token字段
+**这里需要注意：在注册用户的时候就需要为api_token字段自动生成一个随机字符串了，使用'api_token' => str_random(60)**
+
+③如何使用api_token?
+    
+    1、在resources/assets/js/bootstrap.js文件里面的window.axios.defaults.headers.common = {}里面添加一行：'Authorization': window.Laravel.apiToken,添加后代码如下：
+    window.axios.defaults.headers.common = {
+        'X-CSRF-TOKEN': window.Laravel.csrfToken,
+        'Authorization': window.Laravel.apiToken,//这就是新添加的一行
+        'X-Requested-With': 'XMLHttpRequest'
+    };
+    2、在views/layouts/app.blade.php文件里面添加一行代码：Laravel.apiToken = "{{Auth::check() ? 'Bearer '.Auth::user()->api_token :'Bearer '}}"位置是在：
+    <!-- Scripts -->
+    <script>
+        window.Laravel = {!! json_encode([
+            'csrfToken' => csrf_token(),
+        ]) !!};
+        Laravel.apiToken = "{{Auth::check() ? 'Bearer '.Auth::user()->api_token :'Bearer '}}" //这就是添加的一行
+    </script>
+④最后执行：npm run dev进行编译一遍即可解决上面报错的问题了。
+⑤最后的最后，有了上面的步骤，就可以在api中通过下面的方法得到请求api的用户数据：
+    
+    return Auth::guard('api')->user();
