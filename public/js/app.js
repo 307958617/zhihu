@@ -11291,6 +11291,7 @@ __webpack_require__(41);
 
 Vue.component('example', __webpack_require__(31));
 Vue.component('question_follow_button', __webpack_require__(32));
+Vue.component('user_follow_button', __webpack_require__(53));
 
 var app = new Vue({
   el: '#app'
@@ -42356,6 +42357,123 @@ window.axios.defaults.headers.common = {
 __webpack_require__(12);
 module.exports = __webpack_require__(11);
 
+
+/***/ }),
+/* 44 */,
+/* 45 */,
+/* 46 */,
+/* 47 */,
+/* 48 */,
+/* 49 */,
+/* 50 */,
+/* 51 */,
+/* 52 */,
+/* 53 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Component = __webpack_require__(9)(
+  /* script */
+  __webpack_require__(55),
+  /* template */
+  __webpack_require__(54),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
+Component.options.__file = "C:\\wamp64\\www\\zhihu\\resources\\assets\\js\\components\\UserFollowButton.vue"
+if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key !== "__esModule"})) {console.error("named exports are not supported in *.vue files.")}
+if (Component.options.functional) {console.error("[vue-loader] UserFollowButton.vue: functional components are not supported with templates, they should use render functions.")}
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-loader/node_modules/vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-75dbc61e", Component.options)
+  } else {
+    hotAPI.reload("data-v-75dbc61e", Component.options)
+  }
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 54 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('button', {
+    staticClass: "btn btn-default",
+    class: {
+      'btn-success': _vm.followed
+    },
+    domProps: {
+      "textContent": _vm._s(_vm.text)
+    },
+    on: {
+      "click": _vm.follow
+    }
+  })
+},staticRenderFns: []}
+module.exports.render._withStripped = true
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+     require("vue-loader/node_modules/vue-hot-reload-api").rerender("data-v-75dbc61e", module.exports)
+  }
+}
+
+/***/ }),
+/* 55 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+    props: ['user'], //这里的数据就是从show.blade.php视图里面传递进来的两个值
+    data: function data() {
+        return {
+            followed: false
+        };
+    },
+    mounted: function mounted() {
+        axios.get('http://zhihu/api/user/followers/' + this.user).then(function (response) {
+            //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+            this.followed = response.data.followed;
+            console.log(response.data.followed);
+        }.bind(this)); //注意这里需要用到.bind(this)不然要报错，找不到followed
+    },
+
+    computed: {
+        //计算属性
+        text: function text() {
+            return this.followed ? '取消关注' : '关注他(她)';
+        }
+    },
+    methods: {
+        follow: function follow() {
+            axios.post('http://zhihu/api/user/follow', { 'u': this.user }).then(function (response) {
+                //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+                this.followed = response.data.followed;
+                console.log(response.data.followed);
+            }.bind(this)); //注意这里需要用到.bind(this)不然要报错，找不到followed
+        }
+    }
+});
 
 /***/ })
 /******/ ]);

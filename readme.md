@@ -1553,10 +1553,14 @@
     然后执行：
     php artisan migrate //将表写入数据库中
 ### 2、到User model里面声明一个多对多关系，即用户表与用户表自己的关系：
-    
-    public function follower()
+    注意：这里需要定义两个相反的
+    public function followers()
     {
         return $this->belongsToMany(self::class,'followers','follower_id','followed_id')->withTimestamps();
+    }
+    public function followersUser()
+    {
+        return $this->belongsToMany(self::class,'followers','followed_id','follower_id')->withTimestamps();
     }
 ### 3、在show.blade.php里面添加显示关注用户的视图代码：
     
@@ -1594,9 +1598,106 @@
                     </div>
                 </div>
                 <question_follow_button question="{{ $question->id }}" user="{{ Auth::id() }}"></question_follow_button>
-                <a href="#editor" class="btn btn-primary">发送私信</a>
+                <a href="#editor" class="btn btn-default">发送私信</a>
             </div>
         </div>
     </div>
     {{--上面是关注用户模块--}}
-### 4、
+### 4、实现关注用户按钮的组件化
+①在resources/assets/js/components目录下创建一个名为：UserFollowButton.vue的文件，内容如下：
+    
+    <template>
+        <button class="btn btn-default"
+                :class="{'btn-success':followed}"
+                v-text="text"
+                @click="follow"
+        >
+        </button>
+    </template>
+    
+    <script>
+        export default {
+            props:['user'],//这里的数据就是从show.blade.php视图里面传递进来的两个值
+            data() {
+                return {
+                    followed:false
+                }
+            },
+            mounted() {
+                axios.get('http://zhihu/api/user/followers/' + this.user).then(function (response) { //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+                    this.followed = response.data.followed;
+                    console.log(response.data.followed)
+                }.bind(this));  //注意这里需要用到.bind(this)不然要报错，找不到followed
+            },
+            computed: { //计算属性
+                text() {
+                    return this.followed ? '取消关注':'关注他(她)'
+                }
+            },
+            methods:{
+                follow() {
+                    axios.post('http://zhihu/api/user/follow',{'u':this.user}).then(function (response) { //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+                        this.followed = response.data.followed;
+                        console.log(response.data.followed)
+                    }.bind(this));  //注意这里需要用到.bind(this)不然要报错，找不到followed
+                }
+            }
+        }
+    </script>
+
+②在api路由文件注册两条路由给UserFollowButton.vue的axios请求用内容分别为：
+    
+    Route::middleware('auth:api')->get('/user/followers/{id}','FollowersController@index');
+    Route::middleware('auth:api')->post('/user/follow','FollowersController@follow');
+③创建一个FollowersController，并添加index与follow方法，内容如下：
+    
+    先执行：php artisan make:controller FollowersController
+    内容为：
+    <?php
+    
+    namespace App\Http\Controllers;
+    
+    use App\Follower;
+    use App\User;
+    use Illuminate\Http\Request;
+    
+    class FollowersController extends Controller
+    {
+        public function index($id)
+        {
+            $user = User::find($id);//这表示这个问题的作者
+            $followers = $user->followersUser()->pluck('follower_id')->toArray();//表示这个问题作者的关注者的id有哪些
+            if(in_array(\Auth::guard('api')->user()->id,$followers)){  //判断登录的用户的id是否在关注者id列表里面
+                return response()->json(['followed'=>true]);
+            }
+            return response()->json(['followed'=>false]);
+        }
+    
+        public function follow(Request $request)
+        {   //注意：这里需要创建一个名为Follower的model才行
+            $userToFollow = User::find($request->get('u'));//这表示被关注的用户，即该问题的作者
+            $authUser = \Auth::guard('api')->user();
+            $followed = Follower::where('follower_id',$authUser->id)->where('followed_id',$userToFollow->id)->first();
+            if($followed !== null){
+                $followed->delete();
+                $userToFollow->decrement('followers_count');
+                return response()->json(['followed'=> false]);
+            }
+            Follower::create([
+                'follower_id' => $authUser->id,
+                'followed_id' => $userToFollow->id
+            ]);
+            $userToFollow->increment('followers_count');
+            return response()->json(['followed'=> true]);
+        }
+    }
+④到User model 里面添加一个方法：
+    
+    public function followThisUser($user)
+    {
+        return $this->followers()->toggle($user);
+    }
+⑤到resources/assets/js/app.js里面注册UserFollowButton组件：
+    
+    Vue.component('user_follow_button', require('./components/UserFollowButton.vue'));
+⑥执行：npm run dev

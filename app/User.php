@@ -40,9 +40,19 @@ class User extends Authenticatable
         return !! $this->follows()->where('question_id',$question)->count(); //注意，这里的两个！表示强制取反，返回是bull值
     }
 
-    public function follower()
+    public function followers()
     {
         return $this->belongsToMany(self::class,'followers','follower_id','followed_id')->withTimestamps();
+    }
+
+    public function followersUser()
+    {
+        return $this->belongsToMany(self::class,'followers','followed_id','follower_id')->withTimestamps();
+    }
+
+    public function followThisUser($user)
+    {
+        return $this->followers()->toggle($user);
     }
 
     public function questions()

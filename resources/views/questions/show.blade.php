@@ -124,8 +124,8 @@
                                 <div class="status-count">{{$question->user->followers_count}}</div>
                             </div>
                         </div>
-                        <question_follow_button question="{{ $question->id }}" user="{{ Auth::id() }}"></question_follow_button>
-                        <a href="#editor" class="btn btn-primary">发送私信</a>
+                        <user_follow_button user="{{ $question->user_id }}"></user_follow_button>
+                        <a href="#editor" class="btn btn-default">发送私信</a>
                     </div>
                 </div>
             </div>
