@@ -1701,3 +1701,134 @@
     
     Vue.component('user_follow_button', require('./components/UserFollowButton.vue'));
 ⑥执行：npm run dev
+## 步骤十二、实现站内信通知和给被关注用户发送邮件
+1、实现站内信通知：
+①创建一个名为：NewUserFollowNotification的notification文件：
+    
+    执行：php artisan make:notification NewUserFollowNotification
+    内容为：
+    <?php
+    
+    namespace App\Notifications;
+    
+    use Illuminate\Bus\Queueable;
+    use Illuminate\Notifications\Notification;
+    use Illuminate\Contracts\Queue\ShouldQueue;
+    use Illuminate\Notifications\Messages\MailMessage;
+    
+    class NewUserFollowNotification extends Notification
+    {
+        use Queueable;
+    
+        /**
+         * Create a new notification instance.
+         *
+         * @return void
+         */
+        public function __construct()
+        {
+            //
+        }
+    
+        /**
+         * Get the notification's delivery channels.
+         *
+         * @param  mixed  $notifiable
+         * @return array
+         */
+        public function via($notifiable)
+        {
+            return ['database'];
+        }
+    
+        public function toDatabase($notifiable)
+        {
+            return [
+                'name' => \Auth::guard('api')->user()->name
+            ];
+        }
+    
+        /**
+         * Get the array representation of the notification.
+         *
+         * @param  mixed  $notifiable
+         * @return array
+         */
+        public function toArray($notifiable)
+        {
+            return [
+                //
+            ];
+        }
+    }
+
+②为站内信的实现提供一个table：
+    
+    执行：php artisan notifications:table
+③执行php artisan migrate 将上面创建的表写入数据库
+④在FollowersController里面的follow()方法下面添加一行代码用于发送站内信通知：
+    
+    $userToFollow->notify(new NewUserFollowNotification());//发送一个站内信通知告诉被关注的人有人关注你了。
+⑤创建一个视图文件index.blade.php用于显示站内信通知：
+    
+    在resources/views/下面创建一个名为notifications的文件夹，里面放置所有的notification
+    这里创建一个名为：index.blade.php,内容为：
+    @extends('layouts.app')
+    
+    @section('content')
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">消息通知</div>
+    
+                        <div class="panel-body">
+                            @foreach($user->notifications as $notification)
+                                {{ $notification->data['name'] }}
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endsection
+
+⑥为上面的视图文件创建一个路由：
+    
+    Route::get('/notifications', 'NotificationsController@index');
+⑦创建名为NotificationsController的控制器：
+    
+    php artisan make:controller NotificationsController
+    内容为：
+    public function index()
+    {
+        $user = \Auth::user();
+        return view('notifications.index',compact('user'));
+    }
+到此为止，就可以登录显示通知了。
+⑧实现根据不同的notification的type值，显示不同的视图文件的方法：
+    
+    将index.blade.php的内容改为：
+    @extends('layouts.app')
+    
+    @section('content')
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">消息通知</div>
+    
+                        <div class="panel-body">
+                            @foreach($user->notifications as $notification)
+                                @include('notifications.'.snake_case(class_basename($notification->type)))
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endsection
+    然后在notifications下创建一个名为：new_user_follow_notification.blade.php，这个名字就是根据type提出来的，其内容为：
+    <li class="notifications">
+        {{ $notification->data['name'] }} 关注了你！
+    </li>

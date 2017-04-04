@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Follower;
+use App\Notifications\NewUserFollowNotification;
 use App\User;
 use Illuminate\Http\Request;
 
@@ -28,6 +29,7 @@ class FollowersController extends Controller
             $userToFollow->decrement('followers_count');
             return response()->json(['followed'=> false]);
         }
+        $userToFollow->notify(new NewUserFollowNotification());//发送一个站内信通知告诉被关注的人有人关注你了。
         Follower::create([
             'follower_id' => $authUser->id,
             'followed_id' => $userToFollow->id

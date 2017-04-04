@@ -29,3 +29,5 @@ Route::resource('questions','QuestionsController',['names'=>[  //命名路由
 Route::post('questions/{question}/answers/store',['as'=>'answers.store','uses'=>'AnswersController@store']);
 
 Route::get('questions/{question}/follow','QuestionFollowController@follow');
+
+Route::get('/notifications', 'NotificationsController@index');
