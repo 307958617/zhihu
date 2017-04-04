@@ -1701,8 +1701,8 @@
     
     Vue.component('user_follow_button', require('./components/UserFollowButton.vue'));
 ⑥执行：npm run dev
-## 步骤十二、实现站内信通知和给被关注用户发送邮件
-1、实现站内信通知：
+## 步骤十二、实现站内信通知和给被关注用户发送邮件用notification的方法：
+### 1、实现站内信通知：
 ①创建一个名为：NewUserFollowNotification的notification文件：
     
     执行：php artisan make:notification NewUserFollowNotification
@@ -1806,6 +1806,7 @@
         return view('notifications.index',compact('user'));
     }
 到此为止，就可以登录显示通知了。
+
 ⑧实现根据不同的notification的type值，显示不同的视图文件的方法：
     
     将index.blade.php的内容改为：
@@ -1832,3 +1833,41 @@
     <li class="notifications">
         {{ $notification->data['name'] }} 关注了你！
     </li>
+### 2、实现发送邮件功能：
+注意：如果想使用sendCloud发送邮件，就不能用laravel自带的mail来发送了，这里就需要自定义channel来实现用sendCloud发送邮件：
+①在app/目录下创建一个Channels文件夹，然后在里面创建一个名为：SendCloudChannel的class,内容为：
+    
+    <?php
+    
+    namespace App\Channels;
+    
+    
+    use Illuminate\Notifications\Notification;
+    
+    class SendCloudChannel
+    {
+        public function send($notifiable,Notification $notification)//这里的send方法很重要
+        {
+            $message = $notification->toSendCloud($notifiable);//这里的toSendCloud方法是自己定义的，这要与NewUserFollowNotification里面的方法一致
+        }
+    }
+②在NewUserFollowNotification里面新建一个方法toSendCloud来实现发送邮件：
+    
+    public function via($notifiable)
+    {
+        return ['database',SendCloudChannel::class];
+    }
+
+    public function toSendCloud($notifiable)
+    {
+        $data = [
+            'url' => 'http://zhihu',
+            'name'=> \Auth::guard('api')->user()->name,
+        ];//注意：这里面的变量名与sendcloud里面的变量名必须一致。
+        $template = new SendCloudTemplate('new_user_follow', $data);//这里需要在SendCloud重新设置一个用户关注的邮件模板
+
+        Mail::raw($template, function ($message) use ($notifiable){
+            $message->from('307958617@qq.com', 'Laravel');
+            $message->to($notifiable->email);
+        });
+    }
