@@ -1,6 +1,7 @@
 <?php
 namespace App;
 
+use App\Mailer\UserMailer;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -76,15 +77,7 @@ class User extends Authenticatable
 
     public function sendPasswordResetNotification($token)
     {
-        $data = [
-            'url' => route('password.reset',$token),
-        ];//注意：这里面的变量名与sendcloud里面的变量名必须一致。
-        $template = new SendCloudTemplate('ZhiHu_Modify_Password', $data);//这里需要在SendCloud重新设置一个修改密码的邮件模板
-
-        Mail::raw($template, function ($message){
-            $message->from('307958617@qq.com', 'Laravel');
-            $message->to($this->email);
-        });
+        (new UserMailer())->passwordReset($this->email,$token);
     }
 
 

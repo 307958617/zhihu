@@ -1871,3 +1871,80 @@
             $message->to($notifiable->email);
         });
     }
+##步骤十三、重构邮件发送代码：
+### 1、在app目录下面创建一个Mailer文件夹,然后在里面创建一个Mailer的基础class，内容如下：
+    
+    <?php
+    
+    namespace App\Mailer;
+    
+    use Mail;
+    use Naux\Mail\SendCloudTemplate;
+    
+    class Mailer  //这里主要是作为一个基类存在，实现基本的功能，供其他类调用的
+    {
+        protected function sendTo($template,$email,array $data)// $template：SendCloud的邮件模板名称;$email:email地址;$data：要传的数据
+        {
+            $content = new SendCloudTemplate($template, $data);//这里需要在SendCloud重新设置一个用户关注的邮件模板
+    
+            Mail::raw($content, function ($message) use ($email){
+                $message->from('307958617@qq.com', 'Laravel');
+                $message->to($email);
+            });
+        }
+    }
+### 2、在app目录下面Mailer文件夹下创建名为：UserMailer.class的类，它继承Mailer，
+    
+    <?php
+    
+    namespace App\Mailer;
+    
+    class UserMailer extends Mailer
+    {
+        public function followNotifyEmail($email)  //这个用来重构NewUserFollowNotification里面的发送邮件方法
+        {
+            $data = [
+                'url' => 'http://zhihu',
+                'name'=> \Auth::guard('api')->user()->name,
+            ];//注意：这里面的变量名与sendcloud里面的变量名必须一致。
+            $this->sendTo('new_user_follow',$email,$data);
+        }
+        
+        public function passwordReset($email,$token) //这将替换User model里面的sendPasswordResetNotification方法发送邮件
+        {
+            $data = [
+                'url' => route('password.reset',$token),
+            ];//注意：这里面的变量名与sendcloud里面的变量名必须一致。
+            $this->sendTo('ZhiHu_Modify_Password',$email,$data);
+        }
+        
+        public function welcome(User $user)  //替换Http/Controllers/Auth/RegisterController里面的sendVerifyEmailTo方法
+        {
+            $data = [
+                'url' => route('verify.email',['token' => $user->confirmation_token]),
+                'name' => $user->name
+            ];
+            $this->sendTo('zhihu_dev_register',$user->email,$data);
+        }
+        
+        
+    }
+### 3、分别将其他地方发送邮件的代码替换如下：
+①将NewUserFollowNotification里的toSendCloud()方法改成如下：
+    
+    public function toSendCloud($notifiable)
+    {
+        (new UserMailer())->followNotifyEmail($notifiable->email);
+    }
+②将User model里面的sendPasswordResetNotification方法改写如下：
+    
+    public function sendPasswordResetNotification($token)
+    {
+        (new UserMailer())->passwordReset($this->email,$token);
+    }
+③将Http/Controllers/Auth/RegisterController里面的sendVerifyEmailTo方法替换如下：
+
+    public function sendVerifyEmailTo($user)
+    {
+        (new UserMailer())->welcome($user);
+    }

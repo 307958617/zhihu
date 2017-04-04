@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
+use App\Mailer\UserMailer;
 use Illuminate\Support\Facades\Mail;//不要忘记添加这里的代码
 use App\User;
 use App\Http\Controllers\Controller;
@@ -81,17 +82,6 @@ class RegisterController extends Controller
 
     public function sendVerifyEmailTo($user)
     {
-        $data = [
-            'url' => route('verify.email',['token' => $user->confirmation_token]),
-            //注意：此处的verify.email是下面第四步②里面创建的路由。
-            'name' => $user->name
-        ];//注意：这里面的变量名与sendcloud里面的变量名必须一致。
-        $template = new SendCloudTemplate('zhihu_dev_register', $data);
-
-        Mail::raw($template, function ($message) use($user) {
-            $message->from('307958617@qq.com', 'Laravel');
-
-            $message->to($user->email);
-        });
+        (new UserMailer())->welcome($user);
     }
 }
