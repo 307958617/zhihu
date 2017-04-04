@@ -1871,7 +1871,8 @@
             $message->to($notifiable->email);
         });
     }
-##步骤十三、重构邮件发送代码：
+    
+## 步骤十三、重构邮件发送代码：
 ### 1、在app目录下面创建一个Mailer文件夹,然后在里面创建一个Mailer的基础class，内容如下：
     
     <?php
