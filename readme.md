@@ -1949,3 +1949,127 @@
     {
         (new UserMailer())->welcome($user);
     }
+## 步骤十四、实现问题答案的点赞功能：
+### 分析：点赞功能其实就是登录用户与答案的关系因此：
+### 1、创建一个migration文件，表名为：answer_user
+    
+    php artisan make:migration crate_answer_user_table --create=answer_user
+    其内容为：
+    public function up()
+    {
+        Schema::create('answer_user', function (Blueprint $table) {
+            $table->increments('id');
+            $table->unsignedInteger('answer_id')->index();
+            $table->unsignedInteger('user_id')->index();
+            $table->timestamps();
+        });
+    }
+### 2、分别到User Model和Answer Model里面定义两个表之间的多对多关联关系：
+    
+    User Model里面的：
+    public function votes()
+    {
+        return $this->belongsToMany(Answer::class)->withTimestamps();
+    }
+
+    public function vote($answer)//用户对一个问题进行点赞与取消点赞
+    {
+        return $this->votes()->toggle($answer);
+    }
+    Answer Model里面的:
+    public function users()// 点赞关系
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
+### 3、创建一个UserVoteButton.vue的组件：
+①到components文件夹里面创建名为UserVoteButton.vue的组件，内容为：
+    
+    <template>
+        <button class="btn btn-default"
+                :class="{'btn-success':followed}"
+                v-text="text"
+                @click="follow"
+        >
+        </button>
+    </template>
+    
+    <script>
+        export default {
+            props:['answer'],//这里的数据就是从show.blade.php视图里面传递进来的值
+            data() {
+                return {
+                    followed:false,
+                    count:0
+                }
+            },
+            mounted() {
+                axios.get('http://zhihu/api/answer/' + this.answer + '/votes/').then(function (response) { //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+                    this.followed = response.data.followed;
+                    this.count = response.data.count;
+                    console.log(response.data.count)
+                }.bind(this));  //注意这里需要用到.bind(this)不然要报错，找不到followed
+            },
+            computed: { //计算属性
+                text() {
+                    return this.count;
+                }
+            },
+            methods:{
+                follow() {
+                    axios.post('http://zhihu/api/answer/vote',{'answer':this.answer}).then(function (response) { //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+                        this.followed = response.data.followed;
+                        this.followed ? this.count ++ : this.count --;
+                        console.log(response.data)
+                    }.bind(this));  //注意这里需要用到.bind(this)不然要报错，找不到followed
+                }
+            }
+        }
+    </script>
+
+②在resources/assets/js/app.js文件里注册上面新建的UserVoteButton.vue组件：
+    
+    Vue.component('user_vote_button', require('./components/UserVoteButton.vue'));
+③在show.blade.php里面引用该组件user_vote_button：
+    
+    <user_vote_button answer="{{ $answer->id }}"></user_vote_button>
+④在api路由文件中创建两条路由分别为：
+    
+    Route::middleware('auth:api')->get('/answer/{id}/votes/','VotersController@index');
+    Route::middleware('auth:api')->post('/answer/vote','VotersController@voted');
+⑤创建一个控制器名为：VotersController：
+    
+    php artisan make:controller VotersController
+    内容如下：
+    <?php
+    
+    namespace App\Http\Controllers;
+    
+    use App\Answer;
+    use Illuminate\Http\Request;
+    
+    class VotersController extends Controller
+    {
+        public function index($id)
+        {
+            $count = Answer::find($id)->users()->count();
+            $votes = \Auth::guard('api')->user()->votes()->pluck('answer_id')->toArray();
+            if(in_array($id,$votes)){
+                return response()->json(['followed'=>true,'count'=>$count]);
+            }
+            return response()->json(['followed'=>false,'count'=>$count]);
+        }
+    
+        public function voted(Request $request)
+        {
+           $vote = \Auth::guard('api')->user()->vote($request->get('answer'));
+            if(count($vote['attached']) > 0){
+                return response()->json(['followed'=>true]);
+            }
+            return response()->json(['followed'=>false]);
+        }
+    }
+
+ 
+    
+    
+    

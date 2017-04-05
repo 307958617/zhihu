@@ -16,4 +16,9 @@ class Answer extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function users()// 点赞关系
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
 }

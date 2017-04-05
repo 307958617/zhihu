@@ -45,6 +45,8 @@
                                         <a href="">{{$answer->user->name}}</a>
                                     </span>
                                     {!!  $answer->body  !!}
+                                    {{ $answer->created_at }}
+                                    <user_vote_button answer="{{ $answer->id }}"></user_vote_button>
                                 </div>
                             </div>
                         @endforeach

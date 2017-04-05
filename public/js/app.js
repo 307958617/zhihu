@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "./";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 43);
+/******/ 	return __webpack_require__(__webpack_require__.s = 49);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -73,7 +73,7 @@
 "use strict";
 
 
-var bind = __webpack_require__(8);
+var bind = __webpack_require__(9);
 
 /*global toString:true*/
 
@@ -374,6 +374,59 @@ module.exports = {
 
 /***/ }),
 /* 1 */
+/***/ (function(module, exports) {
+
+module.exports = function normalizeComponent (
+  rawScriptExports,
+  compiledTemplate,
+  scopeId,
+  cssModules
+) {
+  var esModule
+  var scriptExports = rawScriptExports = rawScriptExports || {}
+
+  // ES6 modules interop
+  var type = typeof rawScriptExports.default
+  if (type === 'object' || type === 'function') {
+    esModule = rawScriptExports
+    scriptExports = rawScriptExports.default
+  }
+
+  // Vue.extend constructor export interop
+  var options = typeof scriptExports === 'function'
+    ? scriptExports.options
+    : scriptExports
+
+  // render functions
+  if (compiledTemplate) {
+    options.render = compiledTemplate.render
+    options.staticRenderFns = compiledTemplate.staticRenderFns
+  }
+
+  // scopedId
+  if (scopeId) {
+    options._scopeId = scopeId
+  }
+
+  // inject cssModules
+  if (cssModules) {
+    var computed = options.computed || (options.computed = {})
+    Object.keys(cssModules).forEach(function (key) {
+      var module = cssModules[key]
+      computed[key] = function () { return module }
+    })
+  }
+
+  return {
+    esModule: esModule,
+    exports: scriptExports,
+    options: options
+  }
+}
+
+
+/***/ }),
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -10633,7 +10686,7 @@ return jQuery;
 
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -10819,7 +10872,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10843,10 +10896,10 @@ function getDefaultAdapter() {
   var adapter;
   if (typeof XMLHttpRequest !== 'undefined') {
     // For browsers use XHR adapter
-    adapter = __webpack_require__(4);
+    adapter = __webpack_require__(5);
   } else if (typeof process !== 'undefined') {
     // For node use HTTP adapter
-    adapter = __webpack_require__(4);
+    adapter = __webpack_require__(5);
   }
   return adapter;
 }
@@ -10917,10 +10970,10 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = defaults;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10931,7 +10984,7 @@ var settle = __webpack_require__(20);
 var buildURL = __webpack_require__(23);
 var parseHeaders = __webpack_require__(29);
 var isURLSameOrigin = __webpack_require__(27);
-var createError = __webpack_require__(7);
+var createError = __webpack_require__(8);
 var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(22);
 
 module.exports = function xhrAdapter(config) {
@@ -11102,10 +11155,10 @@ module.exports = function xhrAdapter(config) {
   });
 };
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11131,7 +11184,7 @@ module.exports = Cancel;
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11143,7 +11196,7 @@ module.exports = function isCancel(value) {
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11167,7 +11220,7 @@ module.exports = function createError(message, config, code, response) {
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11182,59 +11235,6 @@ module.exports = function bind(fn, thisArg) {
     return fn.apply(thisArg, args);
   };
 };
-
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports) {
-
-module.exports = function normalizeComponent (
-  rawScriptExports,
-  compiledTemplate,
-  scopeId,
-  cssModules
-) {
-  var esModule
-  var scriptExports = rawScriptExports = rawScriptExports || {}
-
-  // ES6 modules interop
-  var type = typeof rawScriptExports.default
-  if (type === 'object' || type === 'function') {
-    esModule = rawScriptExports
-    scriptExports = rawScriptExports.default
-  }
-
-  // Vue.extend constructor export interop
-  var options = typeof scriptExports === 'function'
-    ? scriptExports.options
-    : scriptExports
-
-  // render functions
-  if (compiledTemplate) {
-    options.render = compiledTemplate.render
-    options.staticRenderFns = compiledTemplate.staticRenderFns
-  }
-
-  // scopedId
-  if (scopeId) {
-    options._scopeId = scopeId
-  }
-
-  // inject cssModules
-  if (cssModules) {
-    var computed = options.computed || (options.computed = {})
-    Object.keys(cssModules).forEach(function (key) {
-      var module = cssModules[key]
-      computed[key] = function () { return module }
-    })
-  }
-
-  return {
-    esModule: esModule,
-    exports: scriptExports,
-    options: options
-  }
-}
 
 
 /***/ }),
@@ -11281,7 +11281,7 @@ module.exports = g;
  * building robust, powerful web applications using Vue and Laravel.
  */
 
-__webpack_require__(41);
+__webpack_require__(47);
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to
@@ -11291,7 +11291,8 @@ __webpack_require__(41);
 
 Vue.component('example', __webpack_require__(31));
 Vue.component('question_follow_button', __webpack_require__(32));
-Vue.component('user_follow_button', __webpack_require__(53));
+Vue.component('user_follow_button', __webpack_require__(33));
+Vue.component('user_vote_button', __webpack_require__(34));
 
 var app = new Vue({
   el: '#app'
@@ -11311,9 +11312,9 @@ module.exports = __webpack_require__(14);
 
 
 var utils = __webpack_require__(0);
-var bind = __webpack_require__(8);
+var bind = __webpack_require__(9);
 var Axios = __webpack_require__(16);
-var defaults = __webpack_require__(3);
+var defaults = __webpack_require__(4);
 
 /**
  * Create an instance of Axios
@@ -11346,9 +11347,9 @@ axios.create = function create(instanceConfig) {
 };
 
 // Expose Cancel & CancelToken
-axios.Cancel = __webpack_require__(5);
+axios.Cancel = __webpack_require__(6);
 axios.CancelToken = __webpack_require__(15);
-axios.isCancel = __webpack_require__(6);
+axios.isCancel = __webpack_require__(7);
 
 // Expose all/spread
 axios.all = function all(promises) {
@@ -11369,7 +11370,7 @@ module.exports.default = axios;
 "use strict";
 
 
-var Cancel = __webpack_require__(5);
+var Cancel = __webpack_require__(6);
 
 /**
  * A `CancelToken` is an object that can be used to request cancellation of an operation.
@@ -11433,7 +11434,7 @@ module.exports = CancelToken;
 "use strict";
 
 
-var defaults = __webpack_require__(3);
+var defaults = __webpack_require__(4);
 var utils = __webpack_require__(0);
 var InterceptorManager = __webpack_require__(17);
 var dispatchRequest = __webpack_require__(18);
@@ -11586,8 +11587,8 @@ module.exports = InterceptorManager;
 
 var utils = __webpack_require__(0);
 var transformData = __webpack_require__(21);
-var isCancel = __webpack_require__(6);
-var defaults = __webpack_require__(3);
+var isCancel = __webpack_require__(7);
+var defaults = __webpack_require__(4);
 
 /**
  * Throws a `Cancel` if cancellation has been requested.
@@ -11696,7 +11697,7 @@ module.exports = function enhanceError(error, config, code, response) {
 "use strict";
 
 
-var createError = __webpack_require__(7);
+var createError = __webpack_require__(8);
 
 /**
  * Resolve or reject a Promise based on response status.
@@ -12142,11 +12143,11 @@ module.exports = function spread(callback) {
 /* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Component = __webpack_require__(9)(
+var Component = __webpack_require__(1)(
   /* script */
-  __webpack_require__(39),
+  __webpack_require__(43),
   /* template */
-  __webpack_require__(33),
+  __webpack_require__(35),
   /* scopeId */
   null,
   /* cssModules */
@@ -12176,11 +12177,11 @@ module.exports = Component.exports
 /* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var Component = __webpack_require__(9)(
+var Component = __webpack_require__(1)(
   /* script */
-  __webpack_require__(40),
+  __webpack_require__(44),
   /* template */
-  __webpack_require__(34),
+  __webpack_require__(37),
   /* scopeId */
   null,
   /* cssModules */
@@ -12210,6 +12211,74 @@ module.exports = Component.exports
 /* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
+var Component = __webpack_require__(1)(
+  /* script */
+  __webpack_require__(45),
+  /* template */
+  __webpack_require__(38),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
+Component.options.__file = "C:\\wamp64\\www\\zhihu\\resources\\assets\\js\\components\\UserFollowButton.vue"
+if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key !== "__esModule"})) {console.error("named exports are not supported in *.vue files.")}
+if (Component.options.functional) {console.error("[vue-loader] UserFollowButton.vue: functional components are not supported with templates, they should use render functions.")}
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-loader/node_modules/vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-75dbc61e", Component.options)
+  } else {
+    hotAPI.reload("data-v-75dbc61e", Component.options)
+  }
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var Component = __webpack_require__(1)(
+  /* script */
+  __webpack_require__(46),
+  /* template */
+  __webpack_require__(36),
+  /* scopeId */
+  null,
+  /* cssModules */
+  null
+)
+Component.options.__file = "C:\\wamp64\\www\\zhihu\\resources\\assets\\js\\components\\UserVoteButton.vue"
+if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key !== "__esModule"})) {console.error("named exports are not supported in *.vue files.")}
+if (Component.options.functional) {console.error("[vue-loader] UserVoteButton.vue: functional components are not supported with templates, they should use render functions.")}
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-loader/node_modules/vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-68b1bed7", Component.options)
+  } else {
+    hotAPI.reload("data-v-68b1bed7", Component.options)
+  }
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
 module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
   return _vm._m(0)
 },staticRenderFns: [function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
@@ -12236,7 +12305,33 @@ if (false) {
 }
 
 /***/ }),
-/* 34 */
+/* 36 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('button', {
+    staticClass: "btn btn-default",
+    class: {
+      'btn-success': _vm.followed
+    },
+    domProps: {
+      "textContent": _vm._s(_vm.text)
+    },
+    on: {
+      "click": _vm.follow
+    }
+  })
+},staticRenderFns: []}
+module.exports.render._withStripped = true
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+     require("vue-loader/node_modules/vue-hot-reload-api").rerender("data-v-68b1bed7", module.exports)
+  }
+}
+
+/***/ }),
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
@@ -12262,7 +12357,33 @@ if (false) {
 }
 
 /***/ }),
-/* 35 */
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
+  return _c('button', {
+    staticClass: "btn btn-default",
+    class: {
+      'btn-success': _vm.followed
+    },
+    domProps: {
+      "textContent": _vm._s(_vm.text)
+    },
+    on: {
+      "click": _vm.follow
+    }
+  })
+},staticRenderFns: []}
+module.exports.render._withStripped = true
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+     require("vue-loader/node_modules/vue-hot-reload-api").rerender("data-v-75dbc61e", module.exports)
+  }
+}
+
+/***/ }),
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21587,10 +21708,10 @@ Vue$3.compile = compileToFunctions;
 
 module.exports = Vue$3;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2), __webpack_require__(10)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3), __webpack_require__(10)))
 
 /***/ }),
-/* 36 */
+/* 40 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -21618,7 +21739,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 37 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(jQuery) {/*!
@@ -23999,10 +24120,10 @@ if (typeof jQuery === 'undefined') {
 
 }(jQuery);
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 38 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, module) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
@@ -41091,10 +41212,10 @@ if (typeof jQuery === 'undefined') {
   }
 }.call(this));
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10), __webpack_require__(36)(module)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10), __webpack_require__(40)(module)))
 
 /***/ }),
-/* 39 */
+/* 43 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -41123,7 +41244,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 });
 
 /***/ }),
-/* 40 */
+/* 44 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -41171,11 +41292,110 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 });
 
 /***/ }),
-/* 41 */
+/* 45 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+    props: ['user'], //这里的数据就是从show.blade.php视图里面传递进来的两个值
+    data: function data() {
+        return {
+            followed: false
+        };
+    },
+    mounted: function mounted() {
+        axios.get('http://zhihu/api/user/followers/' + this.user).then(function (response) {
+            //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+            this.followed = response.data.followed;
+            console.log(response.data.followed);
+        }.bind(this)); //注意这里需要用到.bind(this)不然要报错，找不到followed
+    },
+
+    computed: {
+        //计算属性
+        text: function text() {
+            return this.followed ? '取消关注' : '关注他(她)';
+        }
+    },
+    methods: {
+        follow: function follow() {
+            axios.post('http://zhihu/api/user/follow', { 'u': this.user }).then(function (response) {
+                //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+                this.followed = response.data.followed;
+                console.log(response.data.followed);
+            }.bind(this)); //注意这里需要用到.bind(this)不然要报错，找不到followed
+        }
+    }
+});
+
+/***/ }),
+/* 46 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+    props: ['answer'], //这里的数据就是从show.blade.php视图里面传递进来的两个值
+    data: function data() {
+        return {
+            followed: false,
+            count: 0
+        };
+    },
+    mounted: function mounted() {
+        axios.get('http://zhihu/api/answer/' + this.answer + '/votes/').then(function (response) {
+            //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+            this.followed = response.data.followed;
+            this.count = response.data.count;
+            console.log(response.data.count);
+        }.bind(this)); //注意这里需要用到.bind(this)不然要报错，找不到followed
+    },
+
+    computed: {
+        //计算属性
+        text: function text() {
+            return this.count;
+        }
+    },
+    methods: {
+        follow: function follow() {
+            axios.post('http://zhihu/api/answer/vote', { 'answer': this.answer }).then(function (response) {
+                //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+                this.followed = response.data.followed;
+                this.followed ? this.count++ : this.count--;
+                console.log(response.data);
+            }.bind(this)); //注意这里需要用到.bind(this)不然要报错，找不到followed
+        }
+    }
+});
+
+/***/ }),
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
-window._ = __webpack_require__(38);
+window._ = __webpack_require__(42);
 
 /**
  * We'll load jQuery and the Bootstrap jQuery plugin which provides support
@@ -41183,17 +41403,17 @@ window._ = __webpack_require__(38);
  * code may be modified to fit the specific needs of your application.
  */
 
-window.$ = window.jQuery = __webpack_require__(1);
+window.$ = window.jQuery = __webpack_require__(2);
 
-__webpack_require__(37);
-__webpack_require__(42);
+__webpack_require__(41);
+__webpack_require__(48);
 /**
  * Vue is a modern JavaScript library for building interactive web interfaces
  * using reactive data binding and reusable components. Vue's API is clean
  * and simple, leaving you to focus on building your next great project.
  */
 
-window.Vue = __webpack_require__(35);
+window.Vue = __webpack_require__(39);
 
 /**
  * We'll load the axios HTTP library which allows us to easily issue requests
@@ -41225,13 +41445,13 @@ window.axios.defaults.headers.common = {
 // });
 
 /***/ }),
-/* 42 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function($) {var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 /*! Select2 4.0.3 | https://github.com/select2/select2/blob/master/LICENSE.md */!function (a) {
-   true ? !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(1)], __WEBPACK_AMD_DEFINE_FACTORY__ = (a),
+   true ? !(__WEBPACK_AMD_DEFINE_ARRAY__ = [__webpack_require__(2)], __WEBPACK_AMD_DEFINE_FACTORY__ = (a),
 				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
 				(__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)) : a("object" == (typeof exports === "undefined" ? "undefined" : _typeof(exports)) ? require("jquery") : jQuery);
@@ -42348,132 +42568,15 @@ window.axios.defaults.headers.common = {
   }(),
       c = b.require("jquery.select2");return a.fn.select2.amd = b, c;
 });
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 43 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(12);
 module.exports = __webpack_require__(11);
 
-
-/***/ }),
-/* 44 */,
-/* 45 */,
-/* 46 */,
-/* 47 */,
-/* 48 */,
-/* 49 */,
-/* 50 */,
-/* 51 */,
-/* 52 */,
-/* 53 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var Component = __webpack_require__(9)(
-  /* script */
-  __webpack_require__(55),
-  /* template */
-  __webpack_require__(54),
-  /* scopeId */
-  null,
-  /* cssModules */
-  null
-)
-Component.options.__file = "C:\\wamp64\\www\\zhihu\\resources\\assets\\js\\components\\UserFollowButton.vue"
-if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key !== "__esModule"})) {console.error("named exports are not supported in *.vue files.")}
-if (Component.options.functional) {console.error("[vue-loader] UserFollowButton.vue: functional components are not supported with templates, they should use render functions.")}
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-loader/node_modules/vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-75dbc61e", Component.options)
-  } else {
-    hotAPI.reload("data-v-75dbc61e", Component.options)
-  }
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
-/* 54 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports={render:function (){var _vm=this;var _h=_vm.$createElement;var _c=_vm._self._c||_h;
-  return _c('button', {
-    staticClass: "btn btn-default",
-    class: {
-      'btn-success': _vm.followed
-    },
-    domProps: {
-      "textContent": _vm._s(_vm.text)
-    },
-    on: {
-      "click": _vm.follow
-    }
-  })
-},staticRenderFns: []}
-module.exports.render._withStripped = true
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-     require("vue-loader/node_modules/vue-hot-reload-api").rerender("data-v-75dbc61e", module.exports)
-  }
-}
-
-/***/ }),
-/* 55 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-/* harmony default export */ __webpack_exports__["default"] = ({
-    props: ['user'], //这里的数据就是从show.blade.php视图里面传递进来的两个值
-    data: function data() {
-        return {
-            followed: false
-        };
-    },
-    mounted: function mounted() {
-        axios.get('http://zhihu/api/user/followers/' + this.user).then(function (response) {
-            //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
-            this.followed = response.data.followed;
-            console.log(response.data.followed);
-        }.bind(this)); //注意这里需要用到.bind(this)不然要报错，找不到followed
-    },
-
-    computed: {
-        //计算属性
-        text: function text() {
-            return this.followed ? '取消关注' : '关注他(她)';
-        }
-    },
-    methods: {
-        follow: function follow() {
-            axios.post('http://zhihu/api/user/follow', { 'u': this.user }).then(function (response) {
-                //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
-                this.followed = response.data.followed;
-                console.log(response.data.followed);
-            }.bind(this)); //注意这里需要用到.bind(this)不然要报错，找不到followed
-        }
-    }
-});
 
 /***/ })
 /******/ ]);

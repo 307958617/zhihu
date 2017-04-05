@@ -66,6 +66,16 @@ class User extends Authenticatable
         return $this->hasMany(Answer::class);
     }
 
+    public function votes()
+    {
+        return $this->belongsToMany(Answer::class)->withTimestamps();
+    }
+
+    public function vote($answer)//用户对一个问题进行点赞与取消点赞
+    {
+        return $this->votes()->toggle($answer);
+    }
+
     /**
      * The attributes that should be hidden for arrays.
      *
