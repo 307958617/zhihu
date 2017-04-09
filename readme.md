@@ -2068,8 +2068,288 @@
             return response()->json(['followed'=>false]);
         }
     }
+##步骤十五、实现发送私信功能：
+### 1、实现发送私信功能前期表的准备工作：
+①创建一个名为Message 的model，并生成迁移文件：
+    
+    php artisan make:model Message -m
+②create_messages_table迁移文件内容：即私信表的字段：
+    
+    public function up()
+    {
+        Schema::create('messages', function (Blueprint $table) {
+            $table->increments('id');
+            $table->unsignedInteger('from_user_id');//发送私信的人的id
+            $table->unsignedInteger('to_user_id');//接收私信的人的id
+            $table->text('body');//存储私信的具体内容
+            $table->string('has_read',8)->default('F');//默认未读
+            $table->timestamp('read_at')->nullable();//记录读取这条私信的时间,这是可以为空的
+            $table->timestamps();
+        });
+    }
+③Message model文件内容为：
+    
+    class Message extends Model
+    {
+        protected $fillable = ['from_user_id','to_user_id','body'];
+    
+        public function fromUser()//定义私信与发送私信用户的关系
+        {
+            return $this->belongsTo(User::class,from_user_id);
+        }
+    
+        public function toUser()//定义私信与接收私信用户的关系
+        {
+            return $this->belongsTo(User::class,to_user_id);
+        }
+    }
+④到User model定义users表与messages表的关系：
+    
+    public function messages()//这里注意，外键要定义为‘to_user_id’
+    {
+        return $this->hasMany(Message::class,'to_user_id');
+    }
+### 2、实现发送私信功能发送界面准备工作（使用模态框）：
+①在resources/assets/js/components目录下面创建名为：SendMessage.vue文件，内容为：
+    
+    <template>
+        <div>
+            <button class="btn btn-default pull-right"
+                    data-toggle="modal" data-target="#myModal"
+            >
+                发送私信
+            </button>
+            <!-- 模态框（Modal） -->
+            <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                发送私信给：{{ user_name }}
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <textarea class="form-control" v-model="body" v-if="!status"></textarea>
+                            <div class="alert alert-success" v-if="status">私信发送成功</div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                            <button type="submit" class="btn btn-primary" @click="store">
+                                发送私信
+                            </button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+        </div>
+    </template>
+    
+    <script>
+        export default {
+            props:['user_name','user_id'],
+            data() {
+                return {
+                    body:'',
+                    status: false
+                }
+            },
+            methods:{
+                store() {
+                    axios.post('/api/message/store',{'body':this.body,'user_id':this.user_id}).then(function (response) {
+                        console.log(response.data.status)
+                        this.status = response.data.status
+                        setTimeout(function(){//设置显示多久才消失
+                            $('#myModal').modal('hide')
+                        },1000)
+                    }.bind(this))//这里一定要绑定this，不然会报错，识别不到status。
+                }
+            }
+        }
+    </script>
+②在app.js里面注册SendMessage.vue组件，添加：
 
- 
+    Vue.component('send_message', require('./components/SendMessage.vue'));
+③到show.blade.php文件相应位置（发送私信的按钮地方）替换代码为：
+    
+    <send_message user_name="{{ $question->user->name }}" user_id="{{ $question->user->id }}"></send_message>
+④执行npm run dev编译
+⑤在api路由文件创建一个路由用于保存私信到数据库：
+    
+    Route::middleware('auth:api')->post('/message/store','MessagesController@store');
+⑥创建MessagesController控制器：
+    
+    php artisan make：controller MessagesController
+    内容为：
+    public function store(Request $request)
+    {
+        $message = Message::create([
+            'from_user_id'=> \Auth::guard('api')->user()->id,
+            'to_user_id'  => request('user_id'),
+            'body'        => request('body')
+        ]);
+        if($message){
+            return response()->json(['status'=> true]);
+        }
+        return response()->json(['status'=> false]);
+    }
+### 3、私信列表（即创建一个用户查看私信的界面）：
+①创建一个Inbox的controller：
+    
+    php artisan make:controller InboxController
+    内容为：
+    <?php
+    
+    namespace App\Http\Controllers;
+    
+    use App\Message;
+    use Illuminate\Http\Request;
+    
+    class InboxController extends Controller
+    {
+    
+        /**
+         * InboxController constructor.
+         */
+        public function __construct()
+        {
+            $this->middleware('auth');
+        }
+    
+        public function index()
+        {
+            $messages= Message::where('from_user_id',\Auth::id())->orWhere('to_user_id',\Auth::id())->with(['fromUser','toUser'])->get()->groupBy('to_user_id');
+    
+            return view('inbox.index',['messages' => $messages]);
+        }
+    
+        public function show($id1,$id2)
+        {
+            $messages = Message::where('from_user_id','=',$id1)->where('to_user_id','=',$id2)
+                        ->orWhere('from_user_id','=',$id2)->where('to_user_id',$id1)
+                        ->latest()->get();
+            return view('inbox.show',compact('messages'));
+        }
+    }
+
+
+②在web路由文件里创建一条路由：
+    
+    Route::get('/inbox', 'InboxController@index');
+    Route::get('/inbox/{id1}/{id2}', 'InboxController@show');
+③在resources/views/inbox里面创建一个index.blade.php视图文件：
+    
+    @extends('layouts.app')
+    
+    @section('content')
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">私信列表</div>
+    {{--下面是显示私信的内容--}}
+                        <div class="panel-body">
+                            @foreach($messages as $key => $message)
+                            <div class="media">
+                                <div class="media-left">
+                                    <a href="">
+                                        @if(Auth::id() == $key)
+                                        <img style="border-radius:50%" src="{{ $message->first()->fromUser->avatar }}" alt="{{$message->first()->fromUser->name}}">
+                                        @else
+                                        <img style="border-radius:50%" src="{{ $message->first()->toUser->avatar }}" alt="{{$message->first()->toUser->name}}">
+                                        @endif
+                                    </a>
+                                </div>
+                                <div class="media-body">
+                                        <span class="media-heading">
+                                            @if(Auth::id() == $key)
+                                            <a href="">{{$message->first()->fromUser->name}}</a>   {{ $message->first()->created_at->diffForHumans() }}
+                                            @else
+                                            <a href="">{{$message->first()->toUser->name}}</a>   {{ $message->first()->created_at->diffForHumans() }}
+                                            @endif
+                                        </span>
+                                    <div>
+                                        @if(Auth::id() == $message->first()->toUser->id)
+                                            <a href="/inbox/{{Auth::id()}}/{{$message->first()->fromUser->id}}">
+                                        @else
+                                            <a href="/inbox/{{Auth::id()}}/{{$message->first()->toUser->id}}">
+                                        @endif
+                                            {!!  $message->first()->body  !!}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+    {{--上面是显示私信的内容--}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endsection
+④在resources/views/inbox里面创建一个show.blade.php视图文件：
+    
+    @extends('layouts.app')
+    
+    @section('content')
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">私信内容</div>
+                        {{--下面是显示私信的内容--}}
+                        <div class="panel-body">
+                            回复私信位置....
+                            @foreach($messages as $key => $message)
+                                <div class="media">
+                                    <div class="media-left">
+                                        <a href="">
+                                            <img style="border-radius:50%" src="{{ $message->fromUser->avatar }}" alt="{{$message->fromUser->name}}">
+                                        </a>
+                                    </div>
+                                    <div class="media-body">
+                                        <span class="media-heading">
+                                            <a href="">{{$message->fromUser->name}}</a>   {{ $message->created_at->diffForHumans() }}
+                                        </span>
+                                        <div>
+                                            {!!  $message->body  !!}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        {{--上面是显示私信的内容--}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endsection
+### 4、回复私信：
+①在resources/views/inbox/show.blade.php视图文件里面的‘回复私信位置....’的地方插入一个回复私信表单：
+    
+    <form class="form-group" action="/inbox/{{Auth::id()}}/sendTo/{{ $id2 }}" method="post">
+        {{csrf_field()}}
+        <textarea class="form-control" name="body"></textarea>
+        <button type="submit" class="btn btn-success pull-right" style="margin-top: 10px">发送私信</button>
+    </form>
+②在web路由文件创建一条路由用于发送私信：
+    
+    Route::post('/inbox/{id1}/sendTo/{id2}', 'InboxController@send');
+③在InboxController里面添加Send方法：
+    
+    public function send($id1,$id2)
+    {
+        $message = Message::create([
+            'from_user_id' => $id1,
+            'to_user_id'   => $id2,
+            'body'         => request('body')
+        ]);
+        return back();
+    }
+
+    
     
     
     

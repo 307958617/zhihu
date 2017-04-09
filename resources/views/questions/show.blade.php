@@ -127,7 +127,8 @@
                             </div>
                         </div>
                         <user_follow_button user="{{ $question->user_id }}"></user_follow_button>
-                        <a href="#editor" class="btn btn-default">发送私信</a>
+                        {{--<a href="#editor" class="btn btn-default">发送私信</a>--}}
+                        <send_message user_name="{{ $question->user->name }}" user_id="{{ $question->user->id }}"></send_message>
                     </div>
                 </div>
             </div>

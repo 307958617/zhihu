@@ -76,6 +76,11 @@ class User extends Authenticatable
         return $this->votes()->toggle($answer);
     }
 
+    public function messages()//这里注意，外键要定义为‘to_user_id’
+    {
+        return $this->hasMany(Message::class,'to_user_id');
+    }
+
     /**
      * The attributes that should be hidden for arrays.
      *

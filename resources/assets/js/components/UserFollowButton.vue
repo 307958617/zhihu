@@ -1,5 +1,5 @@
 <template>
-    <button class="btn btn-default"
+    <button class="btn btn-default pull-left"
             :class="{'btn-success':followed}"
             v-text="text"
             @click="follow"
