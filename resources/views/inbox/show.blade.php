@@ -8,7 +8,7 @@
                     <div class="panel-heading">私信内容</div>
                     {{--下面是显示私信的内容--}}
                     <div class="panel-body">
-                        <form class="form-group" action="/inbox/{{ $id1 }}/sendTo/{{ $id2 }}" method="post">
+                        <form class="form-group" action="/inbox/{{ $dialog_id }}/store" method="post">
                             {{csrf_field()}}
                             <textarea class="form-control" name="body"></textarea>
                             <button type="submit" class="btn btn-success pull-right" style="margin-top: 10px">发送私信</button>

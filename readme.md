@@ -2188,7 +2188,8 @@
         $message = Message::create([
             'from_user_id'=> \Auth::guard('api')->user()->id,
             'to_user_id'  => request('user_id'),
-            'body'        => request('body')
+            'body'        => request('body')，
+           
         ]);
         if($message){
             return response()->json(['status'=> true]);
@@ -2196,6 +2197,60 @@
         return response()->json(['status'=> false]);
     }
 ### 3、私信列表（即创建一个用户查看私信的界面）：
+#### **如何将diffForHuman的英文改为中文方法：
+    在app/Providers/AppServiceProvider.php里面的boot()方法里面添加如下代码：
+    public function boot()
+    {
+        Carbon::setLocale('zh');
+    }
+#### **特别注意在做这一步时，需要为messages表添加一个字段dialog_id，作为发送者与接受者的会话id。
+    
+    执行：php artisan make:migration add_dialog_id_to_messages --table=messages
+    内容为：
+    public function up()
+    {
+        Schema::table('messages', function (Blueprint $table) {
+            $table->bigInteger('dialog_id')->notnull();//表示回话的id
+        });
+    }
+    
+    public function down()
+    {
+        Schema::table('messages', function (Blueprint $table) {
+            $table->dropColumn('dialog_id');
+        });
+    }
+    执行：php artisan migrate
+#### **到这里还需要特别注意一点：需要修改MessagesController里面的store方法，需要在发送私信的时候判断是否已经有过对话并保持回话id即dialog_id:
+    
+    <?php
+    
+    namespace App\Http\Controllers;
+    
+    use App\Message;
+    use Illuminate\Http\Request;
+    
+    class MessagesController extends Controller
+    {
+        public function store(Request $request)
+        {
+            $hasDialog = Message::where('from_user_id',\Auth::guard('api')->user()->id)->where('to_user_id',request('user_id'))
+                                  ->orWhere('to_user_id',\Auth::guard('api')->user()->id)->where('from_user_id',request('user_id'))
+                                  ->first();//判断两个用户之间是否发送过私信，即是否产生过对话。
+            $message = Message::create([
+                'from_user_id'=> \Auth::guard('api')->user()->id,
+                'to_user_id'  => request('user_id'),
+                'body'        => request('body'),
+                'dialog_id'   => $hasDialog ? $hasDialog->dialog_id : time().\Auth::guard('api')->user()->id//如果产生过对话就用原来的对话id，如果没有产生就生成新的对话id。
+            ]);
+            if($message){
+                return response()->json(['status'=> true]);
+            }
+            return response()->json(['status'=> false]);
+        }
+    }
+
+####上面的准备工作做好之后就可以进行以下步骤了：
 ①创建一个Inbox的controller：
     
     php artisan make:controller InboxController
@@ -2220,17 +2275,15 @@
     
         public function index()
         {
-            $messages= Message::where('from_user_id',\Auth::id())->orWhere('to_user_id',\Auth::id())->with(['fromUser','toUser'])->get()->groupBy('to_user_id');
+            $messages= Message::where('from_user_id',\Auth::id())->orWhere('to_user_id',\Auth::id())->with(['fromUser','toUser'])->get()->groupBy('dialog_id');
     
             return view('inbox.index',['messages' => $messages]);
         }
     
-        public function show($id1,$id2)
+        public function show($dialog_id)
         {
-            $messages = Message::where('from_user_id','=',$id1)->where('to_user_id','=',$id2)
-                        ->orWhere('from_user_id','=',$id2)->where('to_user_id',$id1)
-                        ->latest()->get();
-            return view('inbox.show',compact('messages'));
+            $messages = Message::where('dialog_id',$dialog_id)->latest()->get();
+            return view('inbox.show',compact('messages','dialog_id'));
         }
     }
 
@@ -2238,7 +2291,7 @@
 ②在web路由文件里创建一条路由：
     
     Route::get('/inbox', 'InboxController@index');
-    Route::get('/inbox/{id1}/{id2}', 'InboxController@show');
+    Route::get('/inbox/{dialog_id}', 'InboxController@show');
 ③在resources/views/inbox里面创建一个index.blade.php视图文件：
     
     @extends('layouts.app')
@@ -2251,32 +2304,28 @@
                         <div class="panel-heading">私信列表</div>
     {{--下面是显示私信的内容--}}
                         <div class="panel-body">
-                            @foreach($messages as $key => $message)
+                            @foreach($messages as $messageGroup)
                             <div class="media">
                                 <div class="media-left">
                                     <a href="">
-                                        @if(Auth::id() == $key)
-                                        <img style="border-radius:50%" src="{{ $message->first()->fromUser->avatar }}" alt="{{$message->first()->fromUser->name}}">
+                                        @if(Auth::id() == $messageGroup->last()->to_user_id)
+                                        <img style="border-radius:50%" src="{{ $messageGroup->last()->fromUser->avatar }}" alt="{{$messageGroup->last()->fromUser->name}}">
                                         @else
-                                        <img style="border-radius:50%" src="{{ $message->first()->toUser->avatar }}" alt="{{$message->first()->toUser->name}}">
+                                        <img style="border-radius:50%" src="{{ $messageGroup->last()->toUser->avatar }}" alt="{{$messageGroup->last()->toUser->name}}">
                                         @endif
                                     </a>
                                 </div>
                                 <div class="media-body">
                                         <span class="media-heading">
-                                            @if(Auth::id() == $key)
-                                            <a href="">{{$message->first()->fromUser->name}}</a>   {{ $message->first()->created_at->diffForHumans() }}
+                                            @if(Auth::id() == $messageGroup->last()->to_user_id)
+                                            <a href="">{{$messageGroup->last()->fromUser->name}}</a>   {{ $messageGroup->last()->created_at->diffForHumans() }}
                                             @else
-                                            <a href="">{{$message->first()->toUser->name}}</a>   {{ $message->first()->created_at->diffForHumans() }}
+                                            <a href="">{{$messageGroup->last()->toUser->name}}</a>   {{ $messageGroup->last()->created_at->diffForHumans() }}
                                             @endif
                                         </span>
                                     <div>
-                                        @if(Auth::id() == $message->first()->toUser->id)
-                                            <a href="/inbox/{{Auth::id()}}/{{$message->first()->fromUser->id}}">
-                                        @else
-                                            <a href="/inbox/{{Auth::id()}}/{{$message->first()->toUser->id}}">
-                                        @endif
-                                            {!!  $message->first()->body  !!}
+                                        <a href="/inbox/{{$messageGroup->last()->dialog_id}}">
+                                            {!!  $messageGroup->last()->body  !!}
                                         </a>
                                     </div>
                                 </div>
@@ -2329,22 +2378,25 @@
 ### 4、回复私信：
 ①在resources/views/inbox/show.blade.php视图文件里面的‘回复私信位置....’的地方插入一个回复私信表单：
     
-    <form class="form-group" action="/inbox/{{Auth::id()}}/sendTo/{{ $id2 }}" method="post">
+    <form class="form-group" action="/inbox/{{ $dialog_id }}/store" method="post">
         {{csrf_field()}}
         <textarea class="form-control" name="body"></textarea>
         <button type="submit" class="btn btn-success pull-right" style="margin-top: 10px">发送私信</button>
     </form>
 ②在web路由文件创建一条路由用于发送私信：
     
-    Route::post('/inbox/{id1}/sendTo/{id2}', 'InboxController@send');
+    Route::post('/inbox/{dialog_id}/store', 'InboxController@store');
 ③在InboxController里面添加Send方法：
     
-    public function send($id1,$id2)
+    public function store($dialog_id)
     {
-        $message = Message::create([
-            'from_user_id' => $id1,
-            'to_user_id'   => $id2,
-            'body'         => request('body')
+        $message = Message::where('dialog_id',$dialog_id)->first();
+        $toUserId = ($message->to_user_id == \Auth::id()) ? $message->from_user_id : $message->to_user_id;
+        Message::create([
+            'from_user_id' => \Auth::id(),
+            'to_user_id'   => $toUserId,
+            'body'         => request('body'),
+            'dialog_id'    => $dialog_id
         ]);
         return back();
     }

@@ -18,25 +18,26 @@ class InboxController extends Controller
 
     public function index()
     {
-        $messages= Message::where('from_user_id',\Auth::id())->orWhere('to_user_id',\Auth::id())->with(['fromUser','toUser'])->get()->unique()->groupBy('to_user_id');
+        $messages= Message::where('from_user_id',\Auth::id())->orWhere('to_user_id',\Auth::id())->with(['fromUser','toUser'])->get()->groupBy('dialog_id');
 
         return view('inbox.index',['messages' => $messages]);
     }
 
-    public function show($id1,$id2)
+    public function show($dialog_id)
     {
-        $messages = Message::where('from_user_id','=',$id1)->where('to_user_id','=',$id2)
-                    ->orWhere('from_user_id','=',$id2)->where('to_user_id',$id1)
-                    ->latest()->get();
-        return view('inbox.show',compact('messages','id1','id2'));
+        $messages = Message::where('dialog_id',$dialog_id)->latest()->get();
+        return view('inbox.show',compact('messages','dialog_id'));
     }
 
-    public function send($id1,$id2)
+    public function store($dialog_id)
     {
+        $message = Message::where('dialog_id',$dialog_id)->first();
+        $toUserId = ($message->to_user_id == \Auth::id()) ? $message->from_user_id : $message->to_user_id;
         Message::create([
-            'from_user_id' => $id1,
-            'to_user_id'   => $id2,
-            'body'         => request('body')
+            'from_user_id' => \Auth::id(),
+            'to_user_id'   => $toUserId,
+            'body'         => request('body'),
+            'dialog_id'    => $dialog_id
         ]);
         return back();
     }
