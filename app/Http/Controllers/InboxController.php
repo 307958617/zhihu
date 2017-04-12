@@ -26,6 +26,7 @@ class InboxController extends Controller
     public function show($dialog_id)
     {
         $messages = Message::where('dialog_id',$dialog_id)->latest()->get();
+        $messages->markAsRead();//标记已读
         return view('inbox.show',compact('messages','dialog_id'));
     }
 

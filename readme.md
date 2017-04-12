@@ -2068,7 +2068,7 @@
             return response()->json(['followed'=>false]);
         }
     }
-##步骤十五、实现发送私信功能：
+## 步骤十五、实现发送私信功能：
 ### 1、实现发送私信功能前期表的准备工作：
 ①创建一个名为Message 的model，并生成迁移文件：
     
@@ -2250,7 +2250,7 @@
         }
     }
 
-####上面的准备工作做好之后就可以进行以下步骤了：
+#### 上面的准备工作做好之后就可以进行以下步骤了：
 ①创建一个Inbox的controller：
     
     php artisan make:controller InboxController
@@ -2400,7 +2400,88 @@
         ]);
         return back();
     }
+### 5、标记私信已读：
+①在InboxController里面的show()方法，添加如下代码：
+    
+    $messages->markAsRead();//标记已读
+    变化之后代码如下：
+    public function show($dialog_id)
+    {
+        $messages = Message::where('dialog_id',$dialog_id)->latest()->get();
+        $messages->markAsRead();//标记已读
+        return view('inbox.show',compact('messages','dialog_id'));
+    }
+②到Message model文件中定义markAsRead()这个方法：
+    
+    public function markAsRead()
+    {
+        if(is_null($this->read_at)){//如果这条私信没有读
+            return $this->forceFill(['has_read' => 'T','read_at' => $this->freshTimestamp()])->save();//填充字段，标记已读
+        }
+    }    
+**③到这里如果去访问inbox页面会报错：Method markAsRead does not exist.这是因为在第①步里面show方法得到的$message是一个collection对象，但我们没有在collection里面定义markAsRead这个方法
+但是我们又不希望去修改collection的源码，所以这里就给出了一个方法:**
+    
+    1、到Message model里面添加一个newCollection()方法,代码如下：
+    public function newCollection(array $models=[])
+    {
+        return new MessageCollection($models);//这里的这个MessageCollection类还没有写好，需要新建一个类
+    }
+    2、在app目录下面新建一个MessageCollection类，代码为：
+    <?php
+    
+    namespace App;
+    
+    
+    use Illuminate\Database\Eloquent\Collection;
+    
+    class MessageCollection extends Collection
+    {
+        public function markAsRead()//注意，这里的方法必须要与Message model里面的方法名字一样
+        {
+            $this->each(function ($message){
+                $message->markAsRead();//这个方法就是在Message model里面定义的方法，就可以实现对每一条message执行这个方法了
+            });
+        }
+    }
+④之后进入show页面的时候，就会自动将显示的信息都标记为已读了，但是这里有个不好的地方，只要一个人读了，就算另外一个人没读，但是也是显示已读了，
+所以需要在MessageCollection的markAsRead()方法添加一个条件判断即可，变化后的代码如下：
 
+    <?php
+    
+    namespace App;
+    
+    
+    use Illuminate\Database\Eloquent\Collection;
+    
+    class MessageCollection extends Collection
+    {
+        public function markAsRead()//注意，这里的方法必须要与Message model里面的方法名字一样
+        {
+            $this->each(function ($message){
+                if($message->to_user_id === \Auth::id()){//表示只有私信的接收者读了才能标记已读。
+                    $message->markAsRead();//这个方法就是在Message model里面定义的方法，就可以实现对每一条message执行这个方法了
+                }
+            });
+        }
+    }
+### 6、标记未读，即给未读的私信添加样式好辨认：
+①在Message  model 里面添加方法如下：
+    
+    public function unRead()//表示如果是未读就返回一个真，
+    {
+        return $this->has_read === 'F';
+    }
+
+    public function shouldAddUnreadClass()//表示应该添加一个未读标志
+    {
+        if(\Auth::id() === $this->from_user_id){//判断这个用户是私信的发送者
+            return false;//表示如果这个用户是私信发送者，就不用标记未读。
+        }
+        return $this->unRead();
+    }
+②在inbox/index.blade.php里面私信列表添加样式如下：
+    style="{{$messageGroup->last()->shouldAddUnreadClass() ? 'background-color: #b9a791' : '' }}"
     
     
     

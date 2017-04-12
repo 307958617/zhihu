@@ -9,7 +9,7 @@
 {{--下面是显示私信的内容--}}
                     <div class="panel-body">
                         @foreach($messages as $messageGroup)
-                        <div class="media">
+                        <div class="media" style="{{$messageGroup->last()->shouldAddUnreadClass() ? 'background-color: #b9a791' : '' }}" >
                             <div class="media-left">
                                 <a href="">
                                     @if(Auth::id() == $messageGroup->last()->to_user_id)
