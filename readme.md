@@ -2481,7 +2481,116 @@
         return $this->unRead();
     }
 ②在inbox/index.blade.php里面私信列表添加样式如下：
+    
     style="{{$messageGroup->last()->shouldAddUnreadClass() ? 'background-color: #b9a791' : '' }}"
+### 7、实现发送私信通知：
+①创建一个新的Notification：
+    
+    php artisan make:notification newMessageNotification
+②newMessageNotification具体内容为：
+
+    <?php
+    
+    namespace App\Notifications;
+    
+    use App\Message;
+    use Illuminate\Bus\Queueable;
+    use Illuminate\Notifications\Notification;
+    use Illuminate\Contracts\Queue\ShouldQueue;
+    use Illuminate\Notifications\Messages\MailMessage;
+    
+    class newMessageNotification extends Notification
+    {
+        use Queueable;
+        protected $message;
+        public function __construct(Message $message)
+        {
+            $this->message = $message;
+        }
+        public function via($notifiable)
+        {
+            return ['database'];
+        }
+    
+        public function toDatabase($notifiable)
+        {
+            return [
+                'name' => $this->message->fromUser->name,
+                'dialog_id' => $this->message->dialog_id
+            ];
+        }
+    
+        /**
+         * Get the array representation of the notification.
+         *
+         * @param  mixed  $notifiable
+         * @return array
+         */
+        public function toArray($notifiable)
+        {
+            return [
+                //
+            ];
+        }
+    }
+③修改InboxController里面的store方法，即添加发送Notification,修改后代码如下:
+    
+    public function store($dialog_id)
+    {
+        $message = Message::where('dialog_id',$dialog_id)->first();
+        $toUserId = ($message->to_user_id == \Auth::id()) ? $message->from_user_id : $message->to_user_id;
+        $newMessage = Message::create([
+            'from_user_id' => \Auth::id(),
+            'to_user_id'   => $toUserId,
+            'body'         => request('body'),
+            'dialog_id'    => $dialog_id
+        ]);
+        $newMessage->toUser->notify(new newMessageNotification($newMessage));
+        return back();
+    }
+④在views/notifications/里面创建一个名为：new_message_notification.blade.php的视图内容入下：
+    
+    <li class="notifications">
+        <a href="/inbox/{{$notification->data['dialog_id']}}">
+            {{ $notification->data['name'] }} 给你发了一条私信
+        </a>
+    </li>
+### 8、实现私信通知Notification标记已读：
+①添加未读样式，修改views/notifications/new_message_notification.blade.php为：
+    
+    @if($notification->unread())  //unread()这个方法是在DatabaseNotification里面的
+        <li class="notifications" style="background-color: yellowgreen">
+    @else
+        <li class="notifications">
+    @endif
+        <a href="/inbox/{{$notification->data['dialog_id']}}">
+            {{ $notification->data['name'] }} 给你发了一条私信
+        </a>
+    </li>
+②点击链接标记已读然后跳转到具体的私信列表:
+1.同样是修改views/notifications/new_message_notification.blade.php为：
+    
+    @if($notification->unread())
+        <li class="notifications" style="background-color: yellowgreen">
+    @else
+        <li class="notifications">
+    @endif
+        <a href="/notifications/{{ $notification->id }}?redirect_url=inbox/{{$notification->data['dialog_id']}}">//这里是需要注意的的地方
+            {{ $notification->data['name'] }} 给你发了一条私信
+        </a>
+    </li>
+2.到web路由文件添加一条路由实现跳转：
+    
+    Route::get('/notifications/{notification}', 'NotificationsController@show');
+3.进入到NotificationsController，添加show方法：
+        
+    public function show(DatabaseNotification $notification)//这里需要注意引入DatabaseNotification.
+    {
+        $notification->markAsRead();
+
+        return redirect(request('redirect_url'));
+    }
+
     
     
     
