@@ -3,6 +3,8 @@
 namespace App\Mailer;
 
 
+use App\User;
+
 class UserMailer extends Mailer
 {
     public function followNotifyEmail($email)  //这个用来重构NewUserFollowNotification里面的发送邮件方法

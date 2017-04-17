@@ -17,7 +17,7 @@
             }
         },
         mounted() {
-            axios.get('http://zhihu/api/answer/' + this.answer + '/votes/').then(function (response) { //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+            axios.get('/api/answer/' + this.answer + '/votes/').then(function (response) { //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
                 this.followed = response.data.followed;
                 this.count = response.data.count;
                 console.log(response.data.count)
@@ -30,7 +30,7 @@
         },
         methods:{
             follow() {
-                axios.post('http://zhihu/api/answer/vote',{'answer':this.answer}).then(function (response) { //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
+                axios.post('/api/answer/vote',{'answer':this.answer}).then(function (response) { //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
                     this.followed = response.data.followed;
                     this.followed ? this.count ++ : this.count --;
                     console.log(response.data)

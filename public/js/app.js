@@ -6,9 +6,9 @@
 /******/ 	function __webpack_require__(moduleId) {
 /******/
 /******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId])
+/******/ 		if(installedModules[moduleId]) {
 /******/ 			return installedModules[moduleId].exports;
-/******/
+/******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			i: moduleId,
@@ -12154,7 +12154,7 @@ var Component = __webpack_require__(1)(
   /* cssModules */
   null
 )
-Component.options.__file = "C:\\wamp64\\www\\zhihu\\resources\\assets\\js\\components\\Example.vue"
+Component.options.__file = "C:\\wamp\\www\\zhihu\\resources\\assets\\js\\components\\Example.vue"
 if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key !== "__esModule"})) {console.error("named exports are not supported in *.vue files.")}
 if (Component.options.functional) {console.error("[vue-loader] Example.vue: functional components are not supported with templates, they should use render functions.")}
 
@@ -12188,7 +12188,7 @@ var Component = __webpack_require__(1)(
   /* cssModules */
   null
 )
-Component.options.__file = "C:\\wamp64\\www\\zhihu\\resources\\assets\\js\\components\\QuestionFollowButton.vue"
+Component.options.__file = "C:\\wamp\\www\\zhihu\\resources\\assets\\js\\components\\QuestionFollowButton.vue"
 if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key !== "__esModule"})) {console.error("named exports are not supported in *.vue files.")}
 if (Component.options.functional) {console.error("[vue-loader] QuestionFollowButton.vue: functional components are not supported with templates, they should use render functions.")}
 
@@ -12222,7 +12222,7 @@ var Component = __webpack_require__(1)(
   /* cssModules */
   null
 )
-Component.options.__file = "C:\\wamp64\\www\\zhihu\\resources\\assets\\js\\components\\SendMessage.vue"
+Component.options.__file = "C:\\wamp\\www\\zhihu\\resources\\assets\\js\\components\\SendMessage.vue"
 if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key !== "__esModule"})) {console.error("named exports are not supported in *.vue files.")}
 if (Component.options.functional) {console.error("[vue-loader] SendMessage.vue: functional components are not supported with templates, they should use render functions.")}
 
@@ -12256,7 +12256,7 @@ var Component = __webpack_require__(1)(
   /* cssModules */
   null
 )
-Component.options.__file = "C:\\wamp64\\www\\zhihu\\resources\\assets\\js\\components\\UserFollowButton.vue"
+Component.options.__file = "C:\\wamp\\www\\zhihu\\resources\\assets\\js\\components\\UserFollowButton.vue"
 if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key !== "__esModule"})) {console.error("named exports are not supported in *.vue files.")}
 if (Component.options.functional) {console.error("[vue-loader] UserFollowButton.vue: functional components are not supported with templates, they should use render functions.")}
 
@@ -12290,7 +12290,7 @@ var Component = __webpack_require__(1)(
   /* cssModules */
   null
 )
-Component.options.__file = "C:\\wamp64\\www\\zhihu\\resources\\assets\\js\\components\\UserVoteButton.vue"
+Component.options.__file = "C:\\wamp\\www\\zhihu\\resources\\assets\\js\\components\\UserVoteButton.vue"
 if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key !== "__esModule"})) {console.error("named exports are not supported in *.vue files.")}
 if (Component.options.functional) {console.error("[vue-loader] UserVoteButton.vue: functional components are not supported with templates, they should use render functions.")}
 
@@ -41387,7 +41387,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         };
     },
     mounted: function mounted() {
-        axios.post('http://zhihu/api/question/follower', { 'q': this.question, 'u': this.user }).then(function (response) {
+        axios.post('/api/question/follower', { 'q': this.question, 'u': this.user }).then(function (response) {
             //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
             this.followed = response.data.followed;
             console.log(response.data.followed);
@@ -41402,7 +41402,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
     methods: {
         follow: function follow() {
-            axios.post('http://zhihu/api/question/follow', { 'q': this.question, 'u': this.user }).then(function (response) {
+            axios.post('/api/question/follow', { 'q': this.question, 'u': this.user }).then(function (response) {
                 //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
                 this.followed = response.data.followed;
                 console.log(response.data.followed);
@@ -41501,7 +41501,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         };
     },
     mounted: function mounted() {
-        axios.get('http://zhihu/api/user/followers/' + this.user).then(function (response) {
+        axios.get('/api/user/followers/' + this.user).then(function (response) {
             //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
             this.followed = response.data.followed;
             console.log(response.data.followed);
@@ -41516,7 +41516,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
     methods: {
         follow: function follow() {
-            axios.post('http://zhihu/api/user/follow', { 'u': this.user }).then(function (response) {
+            axios.post('/api/user/follow', { 'u': this.user }).then(function (response) {
                 //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
                 this.followed = response.data.followed;
                 console.log(response.data.followed);
@@ -41550,7 +41550,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
         };
     },
     mounted: function mounted() {
-        axios.get('http://zhihu/api/answer/' + this.answer + '/votes/').then(function (response) {
+        axios.get('/api/answer/' + this.answer + '/votes/').then(function (response) {
             //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
             this.followed = response.data.followed;
             this.count = response.data.count;
@@ -41566,7 +41566,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
     },
     methods: {
         follow: function follow() {
-            axios.post('http://zhihu/api/answer/vote', { 'answer': this.answer }).then(function (response) {
+            axios.post('/api/answer/vote', { 'answer': this.answer }).then(function (response) {
                 //注意两个地方：1、这里不能用this.axios.get()；2、传递的数据需要用[]包住，可以用{'q':this.question,'u':this.user}，也可以直接传数据[this.question,this.user],只是后一种方法在api里面不好指定，需要用数组来选择。
                 this.followed = response.data.followed;
                 this.followed ? this.count++ : this.count--;
