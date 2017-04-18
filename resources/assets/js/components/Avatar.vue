@@ -7,11 +7,11 @@
                    v-model="show"
                    :width="300"
                    :height="300"
-                   url="/upload"
+                   url="/avatar"
                    :params="params"
                    :headers="headers"
                    img-format="png"></my-upload>
-        <img :src="imgDataUrl">
+        <img style="border-radius: 50%;height: 50px;" :src="imgDataUrl">
         <a class="btn" @click="toggleShow">修改头像</a>
     </div>
 </template>
@@ -21,17 +21,18 @@
     import myUpload from 'vue-image-crop-upload/upload-2.vue';
 
     export default {
+        props:['avatar'],//这里的avatar是用户的头像地址与avatar.blade.php里面的是一个
         data(){
           return {
-              show: true,
+              show: false,
               params: {
-                  token: '123456798',
-                  name: 'avatar'
+                  _token: Laravel.csrfToken,
+                  name: 'img'
               },
               headers: {
                   smail: '*_~'
               },
-              imgDataUrl: '' // the datebase64 url of created image
+              imgDataUrl: this.avatar // 这里就是头像图片的地址，即用props传递进来的地址
           }
         },
         components: {
@@ -41,12 +42,7 @@
             toggleShow() {
                 this.show = !this.show;
             },
-            /**
-             * crop success
-             *
-             * [param] imgDataUrl
-             * [param] field
-             */
+
             cropSuccess(imgDataUrl, field){
                 console.log('-------- crop success --------');
                 this.imgDataUrl = imgDataUrl;
@@ -61,6 +57,8 @@
                 console.log('-------- upload success --------');
                 console.log(jsonData);
                 console.log('field: ' + field);
+                this.imgDataUrl = jsonData.url;
+                this.toggleShow();
             },
             /**
              * upload fail

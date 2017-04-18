@@ -2594,6 +2594,7 @@
 ①安装：vue-image-crop-upload：github网址：https://github.com/dai-siki/vue-image-crop-upload
     
     npm install vue-image-crop-upload
+    npm install babel-polyfill
 ②在web路由文件注册一条路由用于修改头像：
     
     Route::get('avatar','UsersController@avatar');
@@ -2601,9 +2602,144 @@
     
     php artisan make:controller UsersController
     具体内容为：
+    <?php
+    
+    namespace App\Http\Controllers;
+    
+    use Illuminate\Http\Request;
+    
+    class UsersController extends Controller
+    {
+        public function avatar()
+        {
+            return view('users.avatar');
+        }
+    }
 ④创建一个Vue组件用于修改头像：
     
-    1、在resources/assets/js/components里面创建Avatar.vue
+    1、在resources/assets/js/components里面创建Avatar.vue,内容为：
+        <template>
+            <div>
+                <my-upload field="img"
+                           @crop-success="cropSuccess"
+                           @crop-upload-success="cropUploadSuccess"
+                           @crop-upload-fail="cropUploadFail"
+                           v-model="show"
+                           :width="300"
+                           :height="300"
+                           url="/avatar"  //这里的url就是web路由文件中的上传头像post的地址
+                           :params="params"
+                           :headers="headers"
+                           img-format="png"></my-upload>
+                <img style="border-radius: 50%;height: 50px;" :src="imgDataUrl">
+                <a class="btn" @click="toggleShow">修改头像</a>
+            </div>
+        </template>
+        
+        <script>
+            import 'babel-polyfill'; // es6 shim
+            import myUpload from 'vue-image-crop-upload/upload-2.vue';
+        
+            export default {
+                props:['avatar'],//这里的avatar是用户的头像地址与avatar.blade.php里面的是一个
+                data(){
+                  return {
+                      show: false,
+                      params: {
+                          _token: Laravel.csrfToken,
+                          name: 'img'
+                      },
+                      headers: {
+                          smail: '*_~'
+                      },
+                      imgDataUrl: this.avatar // 这里就是头像图片的地址，即用props传递进来的地址
+                  }
+                },
+                components: {
+                    'my-upload': myUpload
+                },
+                methods: {
+                    toggleShow() {
+                        this.show = !this.show;
+                    },
+        
+                    cropSuccess(imgDataUrl, field){
+                        console.log('-------- crop success --------');
+                        this.imgDataUrl = imgDataUrl;
+                    },
+                    /**
+                     * upload success
+                     *
+                     * [param] jsonData   服务器返回数据，已进行json转码
+                     * [param] field
+                     */
+                    cropUploadSuccess(jsonData, field){
+                        console.log('-------- upload success --------');
+                        console.log(jsonData);
+                        console.log('field: ' + field);
+                        this.imgDataUrl = jsonData.url;
+                        this.toggleShow();
+                    },
+                    /**
+                     * upload fail
+                     *
+                     * [param] status    server api return error status, like 500
+                     * [param] field
+                     */
+                    cropUploadFail(status, field){
+                        console.log('-------- upload fail --------');
+                        console.log(status);
+                        console.log('field: ' + field);
+                    }
+                }
+            }
+        </script>
+        
+    2、在app.js里面注册上面创建的组件：
+        Vue.component('user-avatar', require('./components/Avatar.vue'));
+⑤在views/users里面创建一个avatar.blade.php的视图文件，内容为：
+    
+    @extends('layouts.app')
+    
+    @section('content')
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">修改头像</div>
+    
+                        <div class="panel-body">
+                            <user-avatar avatar="{{Auth::user()->avatar}}"></user-avatar>//引入组件名称
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endsection
+⑥在web路由文件创建一条新的路由，用于保存上传的头像到服务器中：
+    
+    Route::post('avatar','UsersController@changeAvatar');
+⑦在UsersController中添加changeAvatar方法，具体内容入下：
+    
+    public function changeAvatar(Request $request)
+    {
+        $file = $request->file('img');
+        $filename = str_random(16).\Auth::id().'.'.$file->getClientOriginalExtension();
+        $file->move(public_path('avatars'),$filename);
+
+        \Auth::user()->avatar = '/avatars/'.$filename;
+        \Auth::user()->save();
+        return ['url' => \Auth::user()->avatar ];
+    }
+**⑧特别需要注意的地方：**
+    
+    要上传成功，需要修改Avatar.vue的部分配置内容：
+    1、url="/upload"  ---改为--> url="/avatar"  //这里url就是路由的post路径
+    2、
+    params: {
+        token: '123456789',---改为--> _token: Laravel.csrfToken,//这里的csrfToken就是layouts/app.blade.php里面的window.Laravel里面的csrfToken
+        name: 'avatar' ---改为--> name: 'img' //这里的img在changeAvatar方法里要用到 $file = $request->file('img');
+    },
     
     
     

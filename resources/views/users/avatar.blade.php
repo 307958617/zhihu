@@ -8,7 +8,7 @@
                     <div class="panel-heading">修改头像</div>
 
                     <div class="panel-body">
-                        <user-avatar></user-avatar>
+                        <user-avatar avatar="{{Auth::user()->avatar}}"></user-avatar>
                     </div>
                 </div>
             </div>
