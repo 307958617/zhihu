@@ -18,6 +18,7 @@ Vue.component('question_follow_button', require('./components/QuestionFollowButt
 Vue.component('user_follow_button', require('./components/UserFollowButton.vue'));
 Vue.component('user_vote_button', require('./components/UserVoteButton.vue'));
 Vue.component('send_message', require('./components/SendMessage.vue'));
+Vue.component('user-avatar', require('./components/Avatar.vue'));
 
 const app = new Vue({
     el: '#app'

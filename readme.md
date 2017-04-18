@@ -2590,7 +2590,20 @@
 
         return redirect(request('redirect_url'));
     }
-
+## 步骤十六、添加上传头像功能
+①安装：vue-image-crop-upload：github网址：https://github.com/dai-siki/vue-image-crop-upload
+    
+    npm install vue-image-crop-upload
+②在web路由文件注册一条路由用于修改头像：
+    
+    Route::get('avatar','UsersController@avatar');
+③创建UsersController：
+    
+    php artisan make:controller UsersController
+    具体内容为：
+④创建一个Vue组件用于修改头像：
+    
+    1、在resources/assets/js/components里面创建Avatar.vue
     
     
     
